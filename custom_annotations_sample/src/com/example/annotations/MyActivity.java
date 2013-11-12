@@ -1,10 +1,11 @@
 package com.example.annotations;
 
-import blak.annotations.simple.Repeat;
+import blak.annotations.simple.RActivity;
 
+@RActivity
 public class MyActivity {
-    @Repeat
-    public int getInt() {
-        return 0;
+    public int alk;
+
+    private void someMethod() {
     }
 }

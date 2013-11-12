@@ -10,6 +10,7 @@ import javax.tools.StandardLocation;
 import com.sun.codemodel.CodeWriter;
 import com.sun.codemodel.JPackage;
 
+// from androidannotations
 public class ResourceCodeWriter extends CodeWriter {
     private final Filer filer;
 

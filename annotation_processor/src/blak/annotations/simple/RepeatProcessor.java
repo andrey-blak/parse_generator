@@ -1,55 +1,61 @@
 package blak.annotations.simple;
 
-import blak.annotations.OriginatingElements;
-import blak.annotations.ResourceCodeWriter;
-import blak.annotations.SourceCodeWriter;
-import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class RepeatProcessor extends AbstractProcessor {
-    private Set<String> supportedAnnotationNames;
+    private static final String GENERATION_SUFFIX = "_";
+
+    private Set<String> mSupportedAnnotationNames;
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        JCodeModel codeModel = new JCodeModel();
-
-        try {
-            Filer filer = processingEnv.getFiler();
-            Messager messager = processingEnv.getMessager();
-
-            SourceCodeWriter sourceCodeWriter = new SourceCodeWriter(filer, messager, new OriginatingElements());
-            JDefinedClass definedClass = codeModel._class("com.example.MyNewClass");
-            codeModel.build(sourceCodeWriter, new ResourceCodeWriter(filer));
-            //JFieldVar field = definedClass.field(JMod.PRIVATE, int.class, "intVar");
-        } catch (JClassAlreadyExistsException e) {
-            e.printStackTrace();
-            printWarning(e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-            printWarning(e.getMessage());
+        printWarning("Root elements");
+        for (Element elem : roundEnv.getRootElements()) {
+            printWarning(elem);
+            TypeElement typeElement = (TypeElement) elem;
+            for (Element element : typeElement.getEnclosedElements()) {
+                printWarning("   ", element);
+            }
         }
+
+        printWarning("Annotated with", Repeat.class);
+        for (Element el : roundEnv.getElementsAnnotatedWith(Repeat.class)) {
+            printWarning(el);
+        }
+
+        //try {
+        //    JCodeModel codeModel = new JCodeModel();
+        //    Filer filer = processingEnv.getFiler();
+        //    Messager messager = processingEnv.getMessager();
+        //
+        //    SourceCodeWriter sourceCodeWriter = new SourceCodeWriter(filer, messager, new OriginatingElements());
+        //    JDefinedClass definedClass = codeModel._class("com.example.MyNewClass");
+        //    codeModel.build(sourceCodeWriter, new ResourceCodeWriter(filer));
+        //    //JFieldVar field = definedClass.field(JMod.PRIVATE, int.class, "intVar");
+        //} catch (JClassAlreadyExistsException e) {
+        //    e.printStackTrace();
+        //    printWarning(e.getMessage());
+        //} catch (IOException e) {
+        //    e.printStackTrace();
+        //    printWarning(e.getMessage());
+        //}
 
         return true;
     }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        if (supportedAnnotationNames == null) {
+        if (mSupportedAnnotationNames == null) {
             Class<?>[] annotationClassesArray = {
                     Repeat.class,
             };
@@ -58,12 +64,25 @@ public class RepeatProcessor extends AbstractProcessor {
             for (Class<?> annotationClass : annotationClassesArray) {
                 set.add(annotationClass.getName());
             }
-            supportedAnnotationNames = Collections.unmodifiableSet(set);
+            mSupportedAnnotationNames = Collections.unmodifiableSet(set);
         }
-        return supportedAnnotationNames;
+        return mSupportedAnnotationNames;
     }
 
     private void printWarning(Object message) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, message.toString());
+    }
+
+    private void printWarning(Object... messages) {
+        printWarning(join(messages));
+    }
+
+    public static String join(Object... params) {
+        StringBuilder buff = new StringBuilder();
+        for (Object object : params) {
+            buff.append(object.toString());
+            buff.append(" ");
+        }
+        return buff.toString();
     }
 }
