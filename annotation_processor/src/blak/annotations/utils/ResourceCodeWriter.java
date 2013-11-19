@@ -1,4 +1,4 @@
-package blak.annotations;
+package blak.annotations.utils;
 
 import java.io.IOException;
 import java.io.OutputStream;

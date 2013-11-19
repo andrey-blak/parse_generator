@@ -1,10 +1,16 @@
 package com.example.annotations;
 
-import blak.annotations.simple.RActivity;
+import blak.annotations.EActivity;
+import blak.annotations.ViewById;
 
-@RActivity
+@EActivity(1)
 public class MyActivity {
+
+    @ViewById(2)
     public int alk;
+
+    @ViewById(3)
+    public int aslk;
 
     private void someMethod() {
     }

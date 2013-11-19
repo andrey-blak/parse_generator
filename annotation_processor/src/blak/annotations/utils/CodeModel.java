@@ -1,4 +1,4 @@
-package blak.annotations;
+package blak.annotations.utils;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;

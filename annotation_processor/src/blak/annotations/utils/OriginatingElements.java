@@ -1,4 +1,4 @@
-package blak.annotations;
+package blak.annotations.utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,15 +1,14 @@
 package blak.annotations.simple;
 
-import blak.annotations.OriginatingElements;
-import blak.annotations.ResourceCodeWriter;
-import blak.annotations.SourceCodeWriter;
+import blak.annotations.utils.ALog;
+import blak.annotations.utils.OriginatingElements;
+import blak.annotations.utils.ResourceCodeWriter;
+import blak.annotations.utils.SourceCodeWriter;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JExpr;
-import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
@@ -17,12 +16,12 @@ import com.sun.codemodel.JVar;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,10 +51,10 @@ public class RepeatProcessor extends AbstractProcessor {
 
                 generateInit(codeModel, clazz);
 
-                generateClassFile(codeModel);
+                generateClassFile(processingEnv, codeModel);
             } catch (JClassAlreadyExistsException e) {
                 e.printStackTrace();
-                printWarning(e.getMessage());
+                ALog.print(processingEnv, e.getMessage());
             }
         }
 
@@ -90,31 +89,7 @@ public class RepeatProcessor extends AbstractProcessor {
         return mSupportedAnnotationNames;
     }
 
-    private void printWarning(Object message) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, message.toString());
-    }
-
-    private void printWarning(Object... messages) {
-        printWarning(join(messages));
-    }
-
-    private void printElements(RoundEnvironment roundEnv) {
-        printWarning("Root elements");
-        for (Element elem : roundEnv.getRootElements()) {
-            printWarning(elem);
-            TypeElement typeElement = (TypeElement) elem;
-            for (Element element : typeElement.getEnclosedElements()) {
-                printWarning("   ", element);
-            }
-        }
-
-        printWarning("Annotated with", Repeat.class);
-        for (Element el : roundEnv.getElementsAnnotatedWith(Repeat.class)) {
-            printWarning(el);
-        }
-    }
-
-    private void generateClassFile(JCodeModel codeModel) {
+    private void generateClassFile(ProcessingEnvironment env, JCodeModel codeModel) {
         try {
             Filer filer = processingEnv.getFiler();
             Messager messager = processingEnv.getMessager();
@@ -122,16 +97,7 @@ public class RepeatProcessor extends AbstractProcessor {
             codeModel.build(sourceCodeWriter, new ResourceCodeWriter(filer));
         } catch (IOException e) {
             e.printStackTrace();
-            printWarning(e.getMessage());
+            ALog.print(env, e.getMessage());
         }
-    }
-
-    public static String join(Object... params) {
-        StringBuilder buff = new StringBuilder();
-        for (Object object : params) {
-            buff.append(object.toString());
-            buff.append(" ");
-        }
-        return buff.toString();
     }
 }
