@@ -15,68 +15,59 @@
  */
 package blak.annotations.android;
 
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-
 public class AnnotationElementsHolder implements AnnotationElements {
+    private final Map<String, Set<? extends Element>> rootAnnotatedElementsByAnnotation = new HashMap<String, Set<? extends Element>>();
+    private final Map<String, Set<AnnotatedAndRootElements>> ancestorAnnotatedElementsByAnnotation = new HashMap<String, Set<AnnotatedAndRootElements>>();
 
-	private final Map<String, Set<? extends Element>> rootAnnotatedElementsByAnnotation = new HashMap<String, Set<? extends Element>>();
-	private final Map<String, Set<AnnotatedAndRootElements>> ancestorAnnotatedElementsByAnnotation = new HashMap<String, Set<AnnotatedAndRootElements>>();
+    public void putRootAnnotatedElements(String annotationName, Set<? extends Element> annotatedElements) {
+        rootAnnotatedElementsByAnnotation.put(annotationName, annotatedElements);
+    }
 
-	public void putRootAnnotatedElements(String annotationName, Set<? extends Element> annotatedElements) {
-		rootAnnotatedElementsByAnnotation.put(annotationName, annotatedElements);
-	}
+    public void putAncestorAnnotatedElement(String annotationName, Element annotatedElement, TypeElement rootTypeElement) {
+        Set<AnnotatedAndRootElements> set = ancestorAnnotatedElementsByAnnotation.get(annotationName);
+        if (set == null) {
+            set = new HashSet<AnnotatedAndRootElements>();
+            ancestorAnnotatedElementsByAnnotation.put(annotationName, set);
+        }
+        set.add(new AnnotatedAndRootElements(annotatedElement, rootTypeElement));
+    }
 
-	public void putAncestorAnnotatedElement(String annotationName, Element annotatedElement, TypeElement rootTypeElement) {
-		Set<AnnotatedAndRootElements> set = ancestorAnnotatedElementsByAnnotation.get(annotationName);
-		if (set == null) {
-			set = new HashSet<AnnotationElements.AnnotatedAndRootElements>();
-			ancestorAnnotatedElementsByAnnotation.put(annotationName, set);
-		}
-		set.add(new AnnotatedAndRootElements(annotatedElement, rootTypeElement));
-	}
+    @Override
+    public Set<AnnotatedAndRootElements> getAncestorAnnotatedElements(String annotationName) {
+        Set<AnnotatedAndRootElements> set = ancestorAnnotatedElementsByAnnotation.get(annotationName);
+        if (set != null) {
+            return set;
+        } else {
+            return Collections.emptySet();
+        }
+    }
 
-	@Override
-	public Set<AnnotatedAndRootElements> getAncestorAnnotatedElements(String annotationName) {
-		Set<AnnotatedAndRootElements> set = ancestorAnnotatedElementsByAnnotation.get(annotationName);
-		if (set != null) {
-			return set;
-		} else {
-			return Collections.emptySet();
-		}
-	}
+    @Override
+    public Set<? extends Element> getRootAnnotatedElements(String annotationName) {
+        Set<? extends Element> set = rootAnnotatedElementsByAnnotation.get(annotationName);
+        if (set != null) {
+            return set;
+        } else {
+            return Collections.emptySet();
+        }
+    }
 
-	@Override
-	public Set<? extends Element> getRootAnnotatedElements(String annotationName) {
-		Set<? extends Element> set = rootAnnotatedElementsByAnnotation.get(annotationName);
-		if (set != null) {
-			return set;
-		} else {
-			return Collections.emptySet();
-		}
-	}
+    @Override
+    public Set<Element> getAllElements() {
+        Set<Element> allElements = new HashSet<Element>();
 
-	@Override
-	public Set<Element> getAllElements() {
-		Set<Element> allElements = new HashSet<Element>();
+        for (Set<? extends Element> annotatedElements : rootAnnotatedElementsByAnnotation.values()) {
+            allElements.addAll(annotatedElements);
+        }
 
-		for (Set<? extends Element> annotatedElements : rootAnnotatedElementsByAnnotation.values()) {
-			allElements.addAll(annotatedElements);
-		}
-
-		return allElements;
-	}
-
-	public AnnotationElementsHolder validatingHolder() {
-		AnnotationElementsHolder holder = new AnnotationElementsHolder();
-		holder.ancestorAnnotatedElementsByAnnotation.putAll(ancestorAnnotatedElementsByAnnotation);
-		return holder;
-	}
-
+        return allElements;
+    }
 }

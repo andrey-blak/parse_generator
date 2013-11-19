@@ -20,6 +20,5 @@ import com.sun.codemodel.JCodeModel;
 import javax.lang.model.element.Element;
 
 public interface GeneratingElementProcessor extends HasTarget {
-
     void process(Element element, JCodeModel codeModel, EBeansHolder eBeansHolder) throws Exception;
 }

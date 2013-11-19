@@ -20,180 +20,50 @@ import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpression;
-import com.sun.codemodel.JFieldVar;
-import com.sun.codemodel.JMethod;
-import com.sun.codemodel.JSwitch;
-import com.sun.codemodel.JVar;
 
 import javax.lang.model.element.Element;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
 
-import static com.sun.codemodel.JExpr._new;
-import static com.sun.codemodel.JExpr._null;
 import static com.sun.codemodel.JExpr._this;
-import static com.sun.codemodel.JMod.FINAL;
-import static com.sun.codemodel.JMod.PRIVATE;
-import static com.sun.codemodel.JMod.PUBLIC;
 
 public class EBeanHolder {
 
-	public final JDefinedClass generatedClass;
-	/**
-	 * Only defined on activities
-	 */
-	public JVar beforeCreateSavedInstanceStateParam;
-	public JBlock initBody;
+    public final JDefinedClass generatedClass;
 
-	public JBlock extrasNotNullBlock;
-	public JVar extras;
-	public JVar resources;
+    public JExpression contextRef;
 
-	public JMethod cast;
+    private final EBeansHolder eBeansHolder;
+    public final Class<? extends Annotation> eBeanAnnotation;
 
-	public JFieldVar handler;
+    private JExpression notifier;
 
-	public JBlock onOptionsItemSelectedIfElseBlock;
-	public JVar onOptionsItemSelectedItemId;
-	public JVar onOptionsItemSelectedItem;
+    public EBeanHolder(EBeansHolder eBeansHolder, Class<? extends Annotation> eBeanAnnotation, JDefinedClass generatedClass) {
+        this.eBeansHolder = eBeansHolder;
+        this.eBeanAnnotation = eBeanAnnotation;
+        this.generatedClass = generatedClass;
+    }
 
-	public JMethod restoreSavedInstanceStateMethod;
-	public JBlock saveInstanceStateBlock;
+    public JCodeModel codeModel() {
+        return eBeansHolder.codeModel();
+    }
 
-	public JBlock onResumeBlock;
-	public JBlock onDestroyBlock;
+    public JClass refClass(String fullyQualifiedClassName) {
+        return eBeansHolder.refClass(fullyQualifiedClassName);
+    }
 
-	public JExpression contextRef;
-	/**
-	 * Should not be used by inner annotations that target services, broadcast
-	 * receivers, and content providers
-	 */
-	public JBlock initIfActivityBody;
-	public JExpression initActivityRef;
+    public JClass refClass(Class<?> clazz) {
+        return eBeansHolder.refClass(clazz);
+    }
 
-	/**
-	 * Only defined in activities
-	 */
-	public JDefinedClass intentBuilderClass;
+    public JDefinedClass definedClass(String fullyQualifiedClassName) {
+        return eBeansHolder.definedClass(fullyQualifiedClassName);
+    }
 
-	/**
-	 * Only defined in activities
-	 */
-	public JFieldVar intentField;
+    public void generateApiClass(Element originatingElement, Class<?> apiClass) {
+        eBeansHolder.generateApiClass(originatingElement, apiClass);
+    }
 
-	/**
-	 * Only defined in activities
-	 */
-	/**
-	 * OnActivityResult byResultCode
-	 */
-	public final HashMap<Integer, JBlock> onActivityResultCases = new HashMap<Integer, JBlock>();
-
-	public JSwitch onActivityResultSwitch;
-	public JMethod onActivityResultMethod;
-
-	public JVar fragmentArguments;
-	public JFieldVar fragmentArgumentsBuilderField;
-	public JMethod fragmentArgumentsInjectMethod;
-	public JBlock fragmentArgumentsNotNullBlock;
-	public JDefinedClass fragmentBuilderClass;
-
-	public JMethod findNativeFragmentById;
-	public JMethod findSupportFragmentById;
-	public JMethod findNativeFragmentByTag;
-	public JMethod findSupportFragmentByTag;
-
-	public JBlock onCreateOptionMenuMethodBody;
-	public JVar onCreateOptionMenuMenuInflaterVariable;
-	public JVar onCreateOptionMenuMenuParam;
-
-	private final EBeansHolder eBeansHolder;
-	public final Class<? extends Annotation> eBeanAnnotation;
-
-	private ViewChangedHolder viewChangedHolder;
-
-	public JVar onHandleIntentIntent;
-	public JBlock onHandleIntentBody;
-
-	private JExpression notifier;
-
-	public EBeanHolder(EBeansHolder eBeansHolder, Class<? extends Annotation> eBeanAnnotation, JDefinedClass generatedClass) {
-		this.eBeansHolder = eBeansHolder;
-		this.eBeanAnnotation = eBeanAnnotation;
-		this.generatedClass = generatedClass;
-	}
-
-	public EBeansHolder.Classes classes() {
-		return eBeansHolder.classes();
-	}
-
-	public JCodeModel codeModel() {
-		return eBeansHolder.codeModel();
-	}
-
-	public JClass refClass(String fullyQualifiedClassName) {
-		return eBeansHolder.refClass(fullyQualifiedClassName);
-	}
-
-	public JClass refClass(Class<?> clazz) {
-		return eBeansHolder.refClass(clazz);
-	}
-
-	public JDefinedClass definedClass(String fullyQualifiedClassName) {
-		return eBeansHolder.definedClass(fullyQualifiedClassName);
-	}
-
-	public void generateApiClass(Element originatingElement, Class<?> apiClass) {
-		eBeansHolder.generateApiClass(originatingElement, apiClass);
-	}
-
-	public ViewChangedHolder onViewChanged() {
-
-		if (viewChangedHolder == null) {
-			JCodeModel codeModel = eBeansHolder.codeModel();
-
-			generatedClass._implements(OnViewChangedListener.class);
-			JMethod onViewChanged = generatedClass.method(PUBLIC, codeModel.VOID, "onViewChanged");
-			onViewChanged.annotate(Override.class);
-			JVar onViewChangedHasViewsParam = onViewChanged.param(HasViews.class, "hasViews");
-			JClass notifierClass = refClass(OnViewChangedNotifier.class);
-			initBody.staticInvoke(notifierClass, "registerOnViewChangedListener").arg(_this());
-
-			viewChangedHolder = new ViewChangedHolder(onViewChanged, onViewChangedHasViewsParam);
-		}
-		return viewChangedHolder;
-	}
-
-	public void invokeViewChanged(JBlock block) {
-		block.invoke(notifier, "notifyViewChanged").arg(_this());
-	}
-
-	public JVar replacePreviousNotifier(JBlock block) {
-		JClass notifierClass = refClass(OnViewChangedNotifier.class);
-		if (notifier == null) {
-			notifier = generatedClass.field(PRIVATE | FINAL, notifierClass, "onViewChangedNotifier_", _new(notifierClass));
-			generatedClass._implements(HasViews.class);
-		}
-		JVar previousNotifier = block.decl(notifierClass, "previousNotifier", notifierClass.staticInvoke("replaceNotifier").arg(notifier));
-		return previousNotifier;
-	}
-
-	public JVar replacePreviousNotifierWithNull(JBlock block) {
-		JClass notifierClass = refClass(OnViewChangedNotifier.class);
-		JVar previousNotifier = block.decl(notifierClass, "previousNotifier", notifierClass.staticInvoke("replaceNotifier").arg(_null()));
-		return previousNotifier;
-	}
-
-	public void resetPreviousNotifier(JBlock block, JVar previousNotifier) {
-		JClass notifierClass = refClass(OnViewChangedNotifier.class);
-		block.staticInvoke(notifierClass, "replaceNotifier").arg(previousNotifier);
-	}
-
-	public void wrapInitWithNotifier() {
-		JBlock initBlock = initBody;
-		JVar previousNotifier = replacePreviousNotifier(initBlock);
-		initBody = initBody.block();
-		resetPreviousNotifier(initBlock, previousNotifier);
-	}
-
+    public void invokeViewChanged(JBlock block) {
+        block.invoke(notifier, "notifyViewChanged").arg(_this());
+    }
 }

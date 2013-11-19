@@ -15,38 +15,17 @@
  */
 package blak.annotations.android;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import com.sun.codemodel.JCodeModel;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-
-import blak.annotations.utils.OriginatingElements;
-
-import com.sun.codemodel.JCodeModel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class ModelProcessor {
-
-    public static class ProcessResult {
-
-        public final JCodeModel codeModel;
-        public final OriginatingElements originatingElements;
-        public final Set<Class<?>> apiClassesToGenerate;
-
-        public ProcessResult(//
-                             JCodeModel codeModel, //
-                             OriginatingElements originatingElements, //
-                             Set<Class<?>> apiClassesToGenerate) {
-
-            this.codeModel = codeModel;
-            this.originatingElements = originatingElements;
-            this.apiClassesToGenerate = apiClassesToGenerate;
-        }
-    }
-
     private final List<DecoratingElementProcessor> enclosedProcessors = new ArrayList<DecoratingElementProcessor>();
     private final List<GeneratingElementProcessor> typeProcessors = new ArrayList<GeneratingElementProcessor>();
 
@@ -69,7 +48,7 @@ public class ModelProcessor {
             Set<? extends Element> annotatedElements = validatedModel.getRootAnnotatedElements(annotationName);
             for (Element annotatedElement : annotatedElements) {
                 /*
-				 * We do not generate code for abstract classes, because the
+                 * We do not generate code for abstract classes, because the
 				 * generated classes are final anyway (we do not want anyone to
 				 * extend them).
 				 */
@@ -77,8 +56,8 @@ public class ModelProcessor {
                     processThrowing(processor, annotatedElement, codeModel, eBeansHolder);
                 }
             }
-			/*
-			 * We currently do not take into account class annotations from
+            /*
+             * We currently do not take into account class annotations from
 			 * ancestors. We should careful design the priority rules first.
 			 */
         }
@@ -87,14 +66,14 @@ public class ModelProcessor {
             String annotationName = processor.getTarget();
 
 			/*
-			 * For ancestors, the processor manipulates the annotated elements,
+             * For ancestors, the processor manipulates the annotated elements,
 			 * but uses the holder for the root element
 			 */
-            Set<AnnotationElements.AnnotatedAndRootElements> ancestorAnnotatedElements = validatedModel.getAncestorAnnotatedElements(annotationName);
-            for (AnnotationElements.AnnotatedAndRootElements elements : ancestorAnnotatedElements) {
+            Set<AnnotatedAndRootElements> ancestorAnnotatedElements = validatedModel.getAncestorAnnotatedElements(annotationName);
+            for (AnnotatedAndRootElements elements : ancestorAnnotatedElements) {
                 EBeanHolder holder = eBeansHolder.getEBeanHolder(elements.rootTypeElement);
-				/*
-				 * Annotations coming from ancestors may be applied to root
+                /*
+                 * Annotations coming from ancestors may be applied to root
 				 * elements that are not validated, and therefore not available.
 				 */
                 if (holder != null) {
@@ -114,7 +93,7 @@ public class ModelProcessor {
                 }
 
 				/*
-				 * We do not generate code for elements belonging to abstract
+                 * We do not generate code for elements belonging to abstract
 				 * classes, because the generated classes are final anyway
 				 */
                 if (!isAbstractClass(enclosingElement)) {
@@ -143,11 +122,11 @@ public class ModelProcessor {
         }
     }
 
-    private boolean isAbstractClass(Element annotatedElement) {
+    private static boolean isAbstractClass(Element annotatedElement) {
         if (annotatedElement instanceof TypeElement) {
             TypeElement typeElement = (TypeElement) annotatedElement;
 
-            return typeElement.getKind() == ElementKind.CLASS && typeElement.getModifiers().contains(Modifier.ABSTRACT);
+            return (typeElement.getKind() == ElementKind.CLASS) && typeElement.getModifiers().contains(Modifier.ABSTRACT);
         } else {
             return false;
         }

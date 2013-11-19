@@ -16,6 +16,5 @@
 package blak.annotations.android;
 
 public interface HasTarget {
-
     String getTarget();
 }

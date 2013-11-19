@@ -34,7 +34,7 @@ public class ModelExtractor {
 	 * Extracts annotated elements on elements given to the annotation processor
 	 * as well as annotations in their superclasses
 	 */
-	public AnnotationElementsHolder extract(Set<? extends TypeElement> annotations, Set<String> annotationTypesToCheck, RoundEnvironment roundEnv) {
+	public static AnnotationElementsHolder extract(Set<? extends TypeElement> annotations, Set<String> annotationTypesToCheck, RoundEnvironment roundEnv) {
 
 		AnnotationElementsHolder extractedModel = new AnnotationElementsHolder();
 
@@ -54,7 +54,7 @@ public class ModelExtractor {
 	 * type if they are not type elements (for annotated elements such as fields
 	 * and methods).
 	 */
-	private Set<TypeElement> findRootTypeElements(Set<? extends Element> rootElements) {
+	private static Set<TypeElement> findRootTypeElements(Set<? extends Element> rootElements) {
 		Set<TypeElement> rootTypeElements = new HashSet<TypeElement>();
 		for (Element element : rootElements) {
 			if (element instanceof TypeElement) {
@@ -69,7 +69,7 @@ public class ModelExtractor {
 		return rootTypeElements;
 	}
 
-	private void extractAncestorsAnnotations(AnnotationElementsHolder extractedModel, Set<String> annotationTypesToCheck, Set<TypeElement> rootTypeElements) {
+	private static void extractAncestorsAnnotations(AnnotationElementsHolder extractedModel, Set<String> annotationTypesToCheck, Set<TypeElement> rootTypeElements) {
 		for (TypeElement rootTypeElement : rootTypeElements) {
 			Set<TypeElement> ancestors = new HashSet<TypeElement>();
 			addAncestorsElements(ancestors, rootTypeElement);
@@ -89,7 +89,7 @@ public class ModelExtractor {
 		}
 	}
 
-	private void extractAnnotations(AnnotationElementsHolder extractedModel, Set<String> annotationTypesToCheck, TypeElement rootTypeElement, Element ancestorEnclosedElement) {
+	private static void extractAnnotations(AnnotationElementsHolder extractedModel, Set<String> annotationTypesToCheck, TypeElement rootTypeElement, Element ancestorEnclosedElement) {
 		List<? extends AnnotationMirror> ancestorEnclosedElementAnnotations = ancestorEnclosedElement.getAnnotationMirrors();
 		for (AnnotationMirror annotationMirror : ancestorEnclosedElementAnnotations) {
 			DeclaredType annotationType = annotationMirror.getAnnotationType();
@@ -114,7 +114,7 @@ public class ModelExtractor {
 	/**
 	 * Finds superclasses until reaching the Object class
 	 */
-	private void addAncestorsElements(Set<TypeElement> elements, TypeElement element) {
+	private static void addAncestorsElements(Set<TypeElement> elements, TypeElement element) {
 		if (element instanceof TypeElement) {
 			TypeElement typeElement = element;
 			TypeMirror ancestorTypeMirror = typeElement.getSuperclass();
@@ -130,11 +130,11 @@ public class ModelExtractor {
 		}
 	}
 
-	private boolean isRootObjectClass(TypeMirror typeMirror) {
+	private static boolean isRootObjectClass(TypeMirror typeMirror) {
 		return typeMirror.getKind() == TypeKind.NONE;
 	}
 
-	private void extractRootElementsAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv, AnnotationElementsHolder extractedModel) {
+	private static void extractRootElementsAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv, AnnotationElementsHolder extractedModel) {
 		for (TypeElement annotation : annotations) {
 			extractedModel.putRootAnnotatedElements(annotation.getQualifiedName().toString(), roundEnv.getElementsAnnotatedWith(annotation));
 		}

@@ -16,21 +16,9 @@
 package blak.annotations.android;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import java.util.Set;
 
 public interface AnnotationElements {
-
-    public static class AnnotatedAndRootElements {
-        public final Element annotatedElement;
-        public final TypeElement rootTypeElement;
-
-        public AnnotatedAndRootElements(Element annotatedElement, TypeElement rootTypeElement) {
-            this.annotatedElement = annotatedElement;
-            this.rootTypeElement = rootTypeElement;
-        }
-    }
-
     Set<? extends Element> getAllElements();
 
     Set<? extends Element> getRootAnnotatedElements(String annotationName);
