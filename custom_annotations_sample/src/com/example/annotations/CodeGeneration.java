@@ -23,9 +23,7 @@ public class CodeGeneration {
         JDefinedClass clazz = codeModel._class(qualifiedName + GENERATION_SUFFIX);
 
         generateExtends(codeModel, clazz, qualifiedName);
-
         generateInit(codeModel, clazz);
-
 
         File destDir = new File("custom_annotations_sample/gen");
         destDir.mkdirs();

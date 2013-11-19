@@ -1,5 +1,7 @@
 package blak.annotations.simple;
 
+import blak.annotations.EActivity;
+import blak.annotations.ViewById;
 import blak.annotations.utils.ALog;
 import blak.annotations.utils.OriginatingElements;
 import blak.annotations.utils.ResourceCodeWriter;
@@ -23,6 +25,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +38,8 @@ public class RepeatProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        printElements(annotations, roundEnv);
+
         //roundEnv.getRootElements().contains()
         for (Element element : roundEnv.getElementsAnnotatedWith(RActivity.class)) {
             try {
@@ -61,6 +66,41 @@ public class RepeatProcessor extends AbstractProcessor {
         return true;
     }
 
+    public void printElements(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        if (nothingToDo(annotations, roundEnv)) {
+            return;
+        }
+
+        Set<? extends Element> eactivities = roundEnv.getElementsAnnotatedWith(EActivity.class);
+        Set<? extends Element> ractivities = roundEnv.getElementsAnnotatedWith(RActivity.class);
+        Set<? extends Element> viewidElements = roundEnv.getElementsAnnotatedWith(ViewById.class);
+        Set<? extends Element> repeatElements = roundEnv.getElementsAnnotatedWith(Repeat.class);
+        for (TypeElement annotation : annotations) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(annotation)) {
+                Element enclosingElement = element.getEnclosingElement();
+                if (eactivities.contains(enclosingElement)){
+                    ALog.print(processingEnv, "eactivities", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
+                }
+
+                if (ractivities .contains(enclosingElement)){
+                    ALog.print(processingEnv, "ractivities", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
+                }
+
+                if (viewidElements.contains(enclosingElement)){
+                    ALog.print(processingEnv, "viewidElements", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
+                }
+
+                if (repeatElements.contains(enclosingElement)){
+                    ALog.print(processingEnv, "repeatElements", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
+                }
+            }
+        }
+    }
+
+    private static boolean nothingToDo(Collection<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        return roundEnv.processingOver() || annotations.isEmpty();
+    }
+
     private void generateInit(JCodeModel codeModel, JDefinedClass clazz) {
         JMethod init = clazz.method(JMod.PUBLIC, codeModel.INT, "init");
 
@@ -78,6 +118,8 @@ public class RepeatProcessor extends AbstractProcessor {
         if (mSupportedAnnotationNames == null) {
             Class<?>[] annotationClassesArray = {
                     Repeat.class,
+                    EActivity.class,
+                    ViewById.class,
             };
 
             Set<String> set = new HashSet<String>(annotationClassesArray.length);

@@ -5,7 +5,6 @@ import blak.annotations.ViewById;
 
 @EActivity(1)
 public class MyActivity {
-
     @ViewById(2)
     public int alk;
 
