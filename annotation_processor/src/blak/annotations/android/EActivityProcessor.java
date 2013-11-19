@@ -54,8 +54,6 @@ public class EActivityProcessor implements GeneratingElementProcessor {
         TypeElement typeElement = (TypeElement) element;
         String annotatedActivityQualifiedName = typeElement.getQualifiedName().toString();
 
-        ALog.print(env, "EActivityProcessor", annotatedActivityQualifiedName);
-
         String subActivityQualifiedName = annotatedActivityQualifiedName + ModelConstants.GENERATION_SUFFIX;
 
         JDefinedClass generatedClass = codeModel._class(subActivityQualifiedName, ClassType.CLASS);

@@ -81,8 +81,6 @@ public class AndroidAnnotationProcessor extends AbstractProcessor {
         ModelExtractor modelExtractor = new ModelExtractor();
         AnnotationElementsHolder extractedModel = modelExtractor.extract(annotations, getSupportedAnnotationTypes(), roundEnv);
 
-        ALog.print(processingEnv, extractedModel.getAllElements());
-
         return extractedModel;
     }
 
