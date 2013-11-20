@@ -16,7 +16,6 @@ public class CodeGeneration {
     private static final String GENERATION_SUFFIX = "_";
 
     public static void main(String[] args) throws Exception {
-
         String qualifiedName = "com.example.annotations.Code";
 
         JCodeModel codeModel = new JCodeModel();

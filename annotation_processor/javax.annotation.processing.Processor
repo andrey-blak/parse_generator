@@ -1,2 +1,3 @@
 #blak.annotations.android.AndroidAnnotationProcessor
-blak.annotations.simple.RepeatProcessor
+#blak.annotations.simple.RepeatProcessor
+blak.annotations.json.JsonProcessor

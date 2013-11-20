@@ -27,7 +27,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import java.io.IOException;
-import java.lang.reflect.AnnotatedElement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
