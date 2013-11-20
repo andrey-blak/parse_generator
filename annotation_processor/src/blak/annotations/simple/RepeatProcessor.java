@@ -22,9 +22,12 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import java.io.IOException;
+import java.lang.reflect.AnnotatedElement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -75,22 +78,35 @@ public class RepeatProcessor extends AbstractProcessor {
         Set<? extends Element> ractivities = roundEnv.getElementsAnnotatedWith(RActivity.class);
         Set<? extends Element> viewidElements = roundEnv.getElementsAnnotatedWith(ViewById.class);
         Set<? extends Element> repeatElements = roundEnv.getElementsAnnotatedWith(Repeat.class);
+
         for (TypeElement annotation : annotations) {
             for (Element element : roundEnv.getElementsAnnotatedWith(annotation)) {
+
                 Element enclosingElement = element.getEnclosingElement();
-                if (eactivities.contains(enclosingElement)){
+
+                for (AnnotationMirror annotationMirror : enclosingElement.getAnnotationMirrors()) {
+                    DeclaredType annotationType = annotationMirror.getAnnotationType();
+                    TypeElement annotationElement = (TypeElement) annotationType.asElement();
+                    if (annotationElement.getQualifiedName().contentEquals(RActivity.class.getCanonicalName())) {
+                        ALog.print(processingEnv, enclosingElement, "annotated with RActivity");
+                        break;
+                    }
+                }
+
+                ALog.print(processingEnv, enclosingElement.getSimpleName(), enclosingElement.getAnnotationMirrors());
+                if (eactivities.contains(enclosingElement)) {
                     ALog.print(processingEnv, "eactivities", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
                 }
 
-                if (ractivities .contains(enclosingElement)){
+                if (ractivities.contains(enclosingElement)) {
                     ALog.print(processingEnv, "ractivities", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
                 }
 
-                if (viewidElements.contains(enclosingElement)){
+                if (viewidElements.contains(enclosingElement)) {
                     ALog.print(processingEnv, "viewidElements", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
                 }
 
-                if (repeatElements.contains(enclosingElement)){
+                if (repeatElements.contains(enclosingElement)) {
                     ALog.print(processingEnv, "repeatElements", element.getSimpleName(), annotation.getSimpleName(), enclosingElement.getSimpleName());
                 }
             }
