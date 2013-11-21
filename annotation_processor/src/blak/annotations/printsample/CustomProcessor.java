@@ -53,7 +53,7 @@ public class CustomProcessor extends AbstractProcessor {
                 e.printStackTrace();
             }
         }
-        return true;
+        return false;
     }
 
     /**

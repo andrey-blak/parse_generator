@@ -65,7 +65,7 @@ public class RepeatProcessor extends AbstractProcessor {
             }
         }
 
-        return true;
+        return false;
     }
 
     public void printElements(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
