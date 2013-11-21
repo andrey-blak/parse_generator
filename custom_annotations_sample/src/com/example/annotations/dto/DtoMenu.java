@@ -10,6 +10,9 @@ public class DtoMenu {
     public int id;
 
     @XmlElement
+    public Integer integer;
+
+    @XmlElement
     public String name;
 
     @XmlElement(name = "popup")
@@ -29,6 +32,10 @@ public class DtoMenu {
         @XmlElement(name = "value")
         public void setValue(String value) {
             this.value = value;
+        }
+
+        public String getValue() {
+            return value;
         }
     }
 }

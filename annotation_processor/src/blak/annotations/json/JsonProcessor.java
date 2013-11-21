@@ -1,6 +1,5 @@
 package blak.annotations.json;
 
-import blak.annotations.simple.RActivity;
 import blak.annotations.utils.ALog;
 import blak.annotations.utils.OriginatingElements;
 import blak.annotations.utils.ResourceCodeWriter;
@@ -33,12 +32,10 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.util.Elements;
+import javax.lang.model.type.TypeMirror;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.IOException;
-import java.lang.annotation.ElementType;
-import java.lang.reflect.AnnotatedElement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +46,7 @@ import java.util.Set;
 // default name
 // default value
 // required
+// list
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends AbstractProcessor {
@@ -104,15 +102,28 @@ public class JsonProcessor extends AbstractProcessor {
             }
 
             if (element.getKind() == ElementKind.FIELD) {
-                String defName = element.getSimpleName().toString();
-                String name = extractValue(mirror, "name", String.class, defName);
-                JFieldRef fieldRef = dto.ref(element.getSimpleName().toString());
-                JInvocation getValue = json.invoke("getString").arg(name);
-                body.assign(fieldRef, getValue);
+                String fieldName = element.getSimpleName().toString();
+                String key = extractValue(mirror, "name", String.class, fieldName);
+
+                optFieldValue(body, dto, json, element, key);
             }
         }
 
         body._return(dto);
+    }
+
+    private void optFieldValue(JBlock body, JVar dto, JVar json, Element field, String key) {
+        String fieldName = field.getSimpleName().toString();
+        JFieldRef fieldRef = dto.ref(fieldName);
+
+        TypeMirror typeMirror = field.asType();
+        String method = JsonUtils.getOptMethod(typeMirror.toString());
+        if (method == null) {
+            method = "optObject";
+        }
+
+        JInvocation getValue = json.invoke(method).arg(key);
+        body.assign(fieldRef, getValue);
     }
 
     private static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {
