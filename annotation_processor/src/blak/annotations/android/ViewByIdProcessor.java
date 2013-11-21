@@ -9,10 +9,12 @@ import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 
 public class ViewByIdProcessor implements DecoratingElementProcessor {
-    ProcessingEnvironment env;
+    private ProcessingEnvironment env;
+    private ALog mLog;
 
     public ViewByIdProcessor(ProcessingEnvironment processingEnv) {
         env = processingEnv;
+        mLog = new ALog(processingEnv);
     }
 
     @Override
@@ -27,6 +29,6 @@ public class ViewByIdProcessor implements DecoratingElementProcessor {
         TypeMirror uiFieldTypeMirror = element.asType();
         String typeQualifiedName = uiFieldTypeMirror.toString();
 
-        ALog.print(env, "ViewByIdProcessor", fieldName, holder.generatedClass);
+        mLog.print("ViewByIdProcessor", fieldName, holder.generatedClass);
     }
 }

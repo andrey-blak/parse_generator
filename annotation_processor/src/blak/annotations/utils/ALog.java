@@ -8,27 +8,33 @@ import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
 
 public class ALog {
-    public static void print(ProcessingEnvironment env, Object message) {
-        env.getMessager().printMessage(Diagnostic.Kind.NOTE, message.toString());
+    private ProcessingEnvironment mEnv;
+
+    public ALog(ProcessingEnvironment env) {
+        mEnv = env;
     }
 
-    public static void print(ProcessingEnvironment env, Object... messages) {
-        print(env, join(messages));
+    public void print(Object message) {
+        mEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, message.toString());
     }
 
-    public static void printElements(ProcessingEnvironment env, RoundEnvironment roundEnv, Class<? extends Annotation> annotation) {
-        print(env, "Root elements");
+    public void print(Object... messages) {
+        print(join(messages));
+    }
+
+    public void printElements(RoundEnvironment roundEnv, Class<? extends Annotation> annotation) {
+        print("Root elements");
         for (Element elem : roundEnv.getRootElements()) {
-            print(env, elem);
+            print(elem);
             TypeElement typeElement = (TypeElement) elem;
             for (Element element : typeElement.getEnclosedElements()) {
-                print(env, "   ", element);
+                print("   ", element);
             }
         }
 
-        print(env, "Annotated with", annotation);
+        print("Annotated with", annotation);
         for (Element el : roundEnv.getElementsAnnotatedWith(annotation)) {
-            print(env, el);
+            print(el);
         }
     }
 

@@ -1,5 +1,6 @@
 package blak.annotations.json;
 
+import blak.annotations.BaseProcessor;
 import blak.annotations.utils.ALog;
 import blak.annotations.utils.OriginatingElements;
 import blak.annotations.utils.ResourceCodeWriter;
@@ -55,23 +56,11 @@ import java.util.Set;
 // arrays & collections (maps?)
 // generics
 
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
-public class JsonProcessor extends AbstractProcessor {
+public class JsonProcessor extends BaseProcessor {
     private static final String GENERATION_SUFFIX = "JsonParser";
 
-    private Set<String> mSupportedAnnotationNames;
-
-    // todo duplication
-    private static boolean nothingToDo(Collection<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        return roundEnv.processingOver() || annotations.isEmpty();
-    }
-
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        if (nothingToDo(annotations, roundEnv)) {
-            return false;
-        }
-
+    public boolean processAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         JCodeModel codeModel = new JCodeModel();
         Set<? extends Element> rootElements = roundEnv.getElementsAnnotatedWith(XmlRootElement.class);
         for (Element rootElement : rootElements) {
@@ -81,7 +70,7 @@ public class JsonProcessor extends AbstractProcessor {
                 e.printStackTrace();
             }
         }
-        generateClassFiles(processingEnv, codeModel);
+        buildModel(codeModel);
 
         return false;
     }
@@ -169,33 +158,10 @@ public class JsonProcessor extends AbstractProcessor {
         return defValue;
     }
 
-    // todo duplication
     @Override
-    public Set<String> getSupportedAnnotationTypes() {
-        if (mSupportedAnnotationNames == null) {
-            Class<?>[] annotationClassesArray = {
-                    XmlRootElement.class
-            };
-
-            Set<String> set = new HashSet<String>(annotationClassesArray.length);
-            for (Class<?> annotationClass : annotationClassesArray) {
-                set.add(annotationClass.getName());
-            }
-            mSupportedAnnotationNames = Collections.unmodifiableSet(set);
-        }
-        return mSupportedAnnotationNames;
-    }
-
-    // todo duplication
-    private static void generateClassFiles(ProcessingEnvironment env, JCodeModel codeModel) {
-        try {
-            Filer filer = env.getFiler();
-            Messager messager = env.getMessager();
-            SourceCodeWriter sourceCodeWriter = new SourceCodeWriter(filer, messager, new OriginatingElements());
-            codeModel.build(sourceCodeWriter, new ResourceCodeWriter(filer));
-        } catch (IOException e) {
-            e.printStackTrace();
-            ALog.print(env, e.getMessage());
-        }
+    protected Class<?>[] getSupportedAnnotations() {
+        return new Class[]{
+                XmlRootElement.class
+        };
     }
 }
