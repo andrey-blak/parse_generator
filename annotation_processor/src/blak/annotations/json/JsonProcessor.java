@@ -10,8 +10,8 @@ import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpressionImpl;
 import com.sun.codemodel.JFieldRef;
-import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
@@ -32,6 +32,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -43,10 +44,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+// TODO
+// char
+// methods
+// class
+// enum
 // default name
 // default value
 // required
-// list
+// arrays & collections (maps?)
+// generics
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends AbstractProcessor {
@@ -105,24 +112,38 @@ public class JsonProcessor extends AbstractProcessor {
                 String fieldName = element.getSimpleName().toString();
                 String key = extractValue(mirror, "name", String.class, fieldName);
 
-                optFieldValue(body, dto, json, element, key);
+                optFieldValue(codeModel, body, dto, json, element, key);
             }
         }
 
         body._return(dto);
     }
 
-    private void optFieldValue(JBlock body, JVar dto, JVar json, Element field, String key) {
+    private void optFieldValue(JCodeModel codeModel, JBlock body, JVar dto, JVar json, Element field, String key) {
         String fieldName = field.getSimpleName().toString();
         JFieldRef fieldRef = dto.ref(fieldName);
 
         TypeMirror typeMirror = field.asType();
-        String method = JsonUtils.getOptMethod(typeMirror.toString());
-        if (method == null) {
-            method = "optObject";
+        String typeString = typeMirror.toString();
+        String jsonGetType = JsonUtils.getGetType(typeString);
+        String opt = "opt";
+        if (jsonGetType == null) {
+            jsonGetType = "Object";
+        }
+        String getMethod = opt + jsonGetType;
+
+        JExpressionImpl getValue = json.invoke(getMethod).arg(key);
+        if (JsonUtils.needsCast(typeString)) {
+            JType castType;
+            if (typeMirror.getKind() == TypeKind.DECLARED) {
+                // todo temp
+                castType = codeModel.ref(typeString.toLowerCase());
+            } else {
+                castType = codeModel.ref(typeString);
+            }
+            getValue = JExpr.cast(castType, getValue);
         }
 
-        JInvocation getValue = json.invoke(method).arg(key);
         body.assign(fieldRef, getValue);
     }
 

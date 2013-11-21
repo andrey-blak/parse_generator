@@ -6,11 +6,20 @@ import java.util.List;
 
 @XmlRootElement
 public class DtoMenu {
-    @XmlElement(name = "id", defaultValue = "42")
+    @XmlElement(name = "myId", defaultValue = "42")
     public int id;
 
     @XmlElement
-    public Integer integer;
+    public Integer amount;
+
+    @XmlElement
+    public char symbol;
+
+    @XmlElement
+    public Float fraction;
+
+    @XmlElement
+    public byte veryShort;
 
     @XmlElement
     public String name;
