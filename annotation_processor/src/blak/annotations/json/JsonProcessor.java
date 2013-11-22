@@ -1,10 +1,6 @@
 package blak.annotations.json;
 
 import blak.annotations.BaseProcessor;
-import blak.annotations.utils.ALog;
-import blak.annotations.utils.OriginatingElements;
-import blak.annotations.utils.ResourceCodeWriter;
-import blak.annotations.utils.SourceCodeWriter;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -21,10 +17,6 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.json.JSONObject;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
@@ -39,16 +31,11 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 // TODO
-// class
 // refactor - add holder
 // methods
 // enum
@@ -96,6 +83,12 @@ public class JsonProcessor extends BaseProcessor {
         JVar json = body.decl(jsonObjectType, "json", JExpr._new(jsonObjectType).arg(jsonString));
         JVar dto = body.decl(rootElementType, "dto", JExpr._new(rootElementType));
 
+        processElements(codeModel, body, dto, json, rootElement);
+
+        body._return(dto);
+    }
+
+    private void processElements(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element rootElement) {
         for (Element element : rootElement.getEnclosedElements()) {
             AnnotationMirror mirror = findAnnotationValue(element, XmlElement.class);
             if (mirror == null) {
@@ -109,22 +102,21 @@ public class JsonProcessor extends BaseProcessor {
                 optFieldValue(codeModel, body, dto, json, element, key);
             }
         }
-
-        body._return(dto);
     }
 
     private void optFieldValue(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element field, String key) {
         TypeMirror typeMirror = field.asType();
         String typeString = typeMirror.toString();
 
-        if ("char".equals(typeString) || "java.lang.Char".equals(typeString)) {
+        if (char.class.getName().equals(typeString) || Character.class.getName().equals(typeString)) {
             optCharValue(codeModel, body, dto, json, field, key);
         } else {
             String jsonGetType = JsonUtils.getGetType(typeString);
             if (jsonGetType != null) {
                 optPrimitiveValue(codeModel, body, dto, json, field, key, typeMirror, typeString, jsonGetType);
             } else {
-                optClassValue(codeModel, body, dto, json, field, key, typeMirror, typeString);
+                JBlock block = body.block();
+                optClassValue(codeModel, block, dto, json, field, key, typeMirror, typeString);
             }
         }
     }
@@ -163,19 +155,19 @@ public class JsonProcessor extends BaseProcessor {
         block.assign(fieldRef, getChar);
     }
 
-    private void optClassValue(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element field, String key, TypeMirror typeMirror, String typeString) {
+    private void optClassValue(JCodeModel codeModel, JBlock block, JExpression dto, JExpression json, Element field, String key, TypeMirror typeMirror, String typeString) {
         String fieldName = field.getSimpleName().toString();
         JFieldRef fieldRef = dto.ref(fieldName);
 
-        mLog.print(processingEnv.getTypeUtils().asElement(typeMirror));
-        mLog.print(processingEnv.getTypeUtils().asElement(typeMirror).getEnclosedElements());
-
         JType fieldType = codeModel.directClass(typeMirror.toString());
-        body.assign(fieldRef, JExpr._new(fieldType));
+        block.assign(fieldRef, JExpr._new(fieldType));
 
-        //dto.menuItem = new DtoMenu.DtoMenuItem();
-        //JSONObject menuItemJson = json.getJSONObject("popup");
-        //dto.menuItem.onclick = menuItemJson.getString("menuItem");
+        JExpressionImpl getString = json.invoke("optJSONObject").arg(key);
+        JClass jsonObjectType = codeModel.ref(JSONObject.class);
+        JVar fieldJson = block.decl(jsonObjectType, fieldName + "Json", getString);
+
+        Element fieldTypeElement = processingEnv.getTypeUtils().asElement(typeMirror);
+        processElements(codeModel, block, fieldRef, fieldJson, fieldTypeElement);
     }
 
     private static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {

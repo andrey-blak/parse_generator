@@ -16,12 +16,6 @@ public class DtoMenu {
     public char symbol;
 
     @XmlElement
-    public Float fraction;
-
-    @XmlElement
-    public byte veryShort;
-
-    @XmlElement
     public String name;
 
     @XmlElement(name = "Popup")
@@ -31,13 +25,19 @@ public class DtoMenu {
     DtoMenuItem menuItem;
 
     public static class DtoPopup {
-        @XmlElement(name = "menuitem")
+        //@XmlElement(name = "menuitem")
         public List<DtoMenuItem> menuitems;
     }
 
     public static class DtoMenuItem {
-        @XmlElement(name = "onclick")
+        @XmlElement(name = "onClick")
         public String onclick;
+
+        @XmlElement
+        public Float fraction;
+
+        @XmlElement
+        public byte _byte;
 
         private String value;
 
