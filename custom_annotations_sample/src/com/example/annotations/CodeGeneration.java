@@ -8,6 +8,7 @@ import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 
 import java.io.File;
@@ -35,7 +36,12 @@ public class CodeGeneration {
     }
 
     private static void generateInit(JCodeModel codeModel, JDefinedClass clazz) {
-        JMethod init = clazz.method(JMod.PUBLIC, codeModel.INT, "init");
+        JMethod init = clazz.getMethod("init", new JType[]{codeModel.INT});
+        if (init != null) {
+            return;
+        }
+
+        init = clazz.method(JMod.PUBLIC, codeModel.INT, "init");
 
         init.annotate(Deprecated.class);
 
