@@ -1,11 +1,13 @@
 package blak.annotations.utils;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +28,16 @@ public class CodeUtils {
     public static String getWrappedType(String wrapperType) {
         String wrappedType = wrapperType.replaceAll("^java.lang.", "").toLowerCase();
         return wrappedType;
+    }
+
+    public static boolean isEnum(ProcessingEnvironment processingEnv, TypeMirror typeMirror) {
+        String enumType = Enum.class.getName() + "<" + typeMirror + ">";
+        for (TypeMirror type : processingEnv.getTypeUtils().directSupertypes(typeMirror)) {
+            if (type.toString().equals(enumType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {

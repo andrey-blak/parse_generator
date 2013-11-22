@@ -24,6 +24,9 @@ public class DtoMenu {
     @XmlElement
     DtoMenuItem menuItem;
 
+    @XmlElement
+    Color color;
+
     public static class DtoPopup {
         //@XmlElement(name = "menuitem")
         public List<DtoMenuItem> menuitems;
@@ -58,5 +61,9 @@ public class DtoMenu {
         public String getValue() {
             return value;
         }
+    }
+
+    public enum Color {
+        RED, GREEN, BLUE,
     }
 }

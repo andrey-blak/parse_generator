@@ -38,7 +38,7 @@ public class ALog {
         }
     }
 
-    public static String join(Object... params) {
+    private static String join(Object... params) {
         StringBuilder buff = new StringBuilder();
         for (Object object : params) {
             if (object == null) {
