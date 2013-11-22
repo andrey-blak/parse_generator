@@ -32,11 +32,7 @@ import java.util.Set;
 
 public class ErrorHelper {
     public static String getErrorMessage(ProcessingEnvironment processingEnv, ProcessingException e) {
-        String errorMessage = "Unexpected error in AndroidAnnotations !\n" //
-                + "You should check if there is already an issue about it on https://github.com/excilys/androidannotations/search?q=" + urlEncodedErrorMessage(e) + "&type=Issues\n" //
-                + "If none exists, please open a new one with the following content and tell us if you can reproduce it or not. Don't forget to give us as much information as you can (like parts of your code in failure).\n";
-        errorMessage += "Java version: " + getJavaCompilerVersion() + "\n";
-        errorMessage += "Javac processors options: " + annotationProcessorOptions(processingEnv) + "\n";
+        String errorMessage = e.getCause().getClass().getName() + "\n";
         errorMessage += "Stacktrace: " + stackTraceToString(e.getCause());
 
         Element element = e.getElement();
@@ -58,48 +54,6 @@ public class ErrorHelper {
     private static String elementContainer(Element element) {
         Element enclosingElement = element.getEnclosingElement();
         return enclosingElement != null ? enclosingElement.toString() : "";
-    }
-
-    private static String annotationProcessorOptions(ProcessingEnvironment processingEnv) {
-        Map<String, String> options = processingEnv.getOptions();
-        Set<Entry<String, String>> optionsEntries = options.entrySet();
-
-        String result = "";
-        for (Entry<String, String> optionEntry : optionsEntries) {
-            result += optionEntry.getKey() + "=" + optionEntry.getValue() + ", ";
-        }
-        return result.length() > 2 ? result.substring(0, result.length() - 2) : result;
-    }
-
-    private static String getJavaCompilerVersion() {
-        ProcessBuilder pb = new ProcessBuilder("javac", "-version");
-        pb.redirectErrorStream(true);
-
-        BufferedReader in = null;
-        try {
-            Process process = pb.start();
-            in = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String buffer = in.readLine();
-            process.waitFor();
-            return buffer;
-        } catch (Exception e) {
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-        return "unknown";
-    }
-
-    private static String urlEncodedErrorMessage(Throwable e) {
-        try {
-            return URLEncoder.encode(e.getCause().getClass().getName(), "UTF-8");
-        } catch (UnsupportedEncodingException e1) {
-            return "";
-        }
     }
 
     private static String stackTraceToString(Throwable e) {
