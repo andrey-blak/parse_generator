@@ -13,12 +13,15 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
 
 import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import java.util.Set;
 
+@SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class RepeatProcessor extends BaseProcessor {
     private static final String GENERATION_SUFFIX = "_";
 

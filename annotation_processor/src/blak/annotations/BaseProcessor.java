@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
 public abstract class BaseProcessor extends AbstractProcessor {
     private Set<String> mSupportedAnnotationNames;
 

@@ -11,10 +11,12 @@ import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JExpressionImpl;
 import com.sun.codemodel.JFieldRef;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.json.JSONObject;
@@ -46,18 +48,21 @@ import java.util.Map;
 import java.util.Set;
 
 // TODO
-// char
-// methods
 // class
+// refactor - add holder
+// methods
 // enum
 // default name
 // default value
 // required
 // arrays & collections (maps?)
 // generics
+// char
 
+@SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends BaseProcessor {
     private static final String GENERATION_SUFFIX = "JsonParser";
+    private static final String OPT = "opt";
 
     @Override
     public boolean processAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -108,18 +113,24 @@ public class JsonProcessor extends BaseProcessor {
         body._return(dto);
     }
 
-    private void optFieldValue(JCodeModel codeModel, JBlock body, JVar dto, JVar json, Element field, String key) {
-        String fieldName = field.getSimpleName().toString();
-        JFieldRef fieldRef = dto.ref(fieldName);
-
+    private void optFieldValue(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element field, String key) {
         TypeMirror typeMirror = field.asType();
         String typeString = typeMirror.toString();
-        String jsonGetType = JsonUtils.getGetType(typeString);
-        String opt = "opt";
-        if (jsonGetType == null) {
-            jsonGetType = "Object";
+
+        if ("char".equals(typeString) || "java.lang.Char".equals(typeString)) {
+            optCharValue(codeModel, body, dto, json, field, key);
+        } else {
+            String jsonGetType = JsonUtils.getGetType(typeString);
+            if (jsonGetType != null) {
+                optPrimitiveValue(codeModel, body, dto, json, field, key, typeMirror, typeString, jsonGetType);
+            } else {
+                optClassValue(codeModel, body, dto, json, field, key, typeMirror, typeString);
+            }
         }
-        String getMethod = opt + jsonGetType;
+    }
+
+    private void optPrimitiveValue(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element field, String key, TypeMirror typeMirror, String typeString, String jsonGetType) {
+        String getMethod = OPT + jsonGetType;
 
         JExpressionImpl getValue = json.invoke(getMethod).arg(key);
         if (JsonUtils.needsCast(typeString)) {
@@ -133,7 +144,38 @@ public class JsonProcessor extends BaseProcessor {
             getValue = JExpr.cast(castType, getValue);
         }
 
+        String fieldName = field.getSimpleName().toString();
+        JFieldRef fieldRef = dto.ref(fieldName);
         body.assign(fieldRef, getValue);
+    }
+
+    private void optCharValue(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element field, String key) {
+        JBlock block = body.block();
+        String fieldName = field.getSimpleName().toString();
+        JExpression getString = json.invoke("optString").arg(key);
+        JVar charString = block.decl(codeModel.ref("String"), fieldName + "String", getString);
+
+        JExpression notEmpty = charString.invoke("isEmpty").not();
+        JExpression firstChar = charString.invoke("charAt").arg(JExpr.lit(0));
+        JExpression nullChar = JExpr.lit('\0');
+        JExpression getChar = JOp.cond(notEmpty, firstChar, nullChar);
+        JFieldRef fieldRef = dto.ref(fieldName);
+        block.assign(fieldRef, getChar);
+    }
+
+    private void optClassValue(JCodeModel codeModel, JBlock body, JExpression dto, JExpression json, Element field, String key, TypeMirror typeMirror, String typeString) {
+        String fieldName = field.getSimpleName().toString();
+        JFieldRef fieldRef = dto.ref(fieldName);
+
+        mLog.print(processingEnv.getTypeUtils().asElement(typeMirror));
+        mLog.print(processingEnv.getTypeUtils().asElement(typeMirror).getEnclosedElements());
+
+        JType fieldType = codeModel.directClass(typeMirror.toString());
+        body.assign(fieldRef, JExpr._new(fieldType));
+
+        //dto.menuItem = new DtoMenu.DtoMenuItem();
+        //JSONObject menuItemJson = json.getJSONObject("popup");
+        //dto.menuItem.onclick = menuItemJson.getString("menuItem");
     }
 
     private static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {
