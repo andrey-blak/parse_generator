@@ -98,7 +98,7 @@ public class JsonProcessor extends BaseProcessor {
         body._return(dto);
     }
 
-    private void processElements(JBlock body, JExpression dto, JExpression json, Element rootElement) {
+    private void processElements(JBlock body, JExpression dto, JExpression json, TypeElement rootElement) {
         for (Element element : rootElement.getEnclosedElements()) {
             AnnotationMirror mirror = CodeUtils.findAnnotationValue(element, XmlElement.class);
             if (mirror == null) {
@@ -166,18 +166,19 @@ public class JsonProcessor extends BaseProcessor {
 
     private void optClassValue(JBlock block, JExpression dto, JExpression json, Element field, String key, String typeString) {
         String fieldName = CodeUtils.getName(field);
-        JFieldRef fieldRef = dto.ref(fieldName);
         TypeMirror typeMirror = field.asType();
 
-        JType fieldType = mCodeModel.directClass(typeMirror.toString());
-        block.assign(fieldRef, JExpr._new(fieldType));
+        JType fieldType = mCodeModel.ref(typeMirror.toString());
+        JExpression object = block.decl(mCodeModel.ref(typeString), fieldName, JExpr._new(fieldType));
 
         JExpressionImpl getString = json.invoke(OPT_JSON_OBJECT).arg(key);
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
-        JVar fieldJson = block.decl(jsonObjectType, fieldName + JSON1, getString);
+        JExpression fieldJson = block.decl(jsonObjectType, fieldName + JSON1, getString);
 
-        Element fieldTypeElement = processingEnv.getTypeUtils().asElement(typeMirror);
-        processElements(block, fieldRef, fieldJson, fieldTypeElement);
+        TypeElement fieldTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(typeMirror);
+        processElements(block, object, fieldJson, fieldTypeElement);
+        JFieldRef fieldRef = dto.ref(fieldName);
+        block.assign(fieldRef, object);
     }
 
     @Override
