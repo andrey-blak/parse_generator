@@ -31,8 +31,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class ErrorHelper {
-
-    public String getErrorMessage(ProcessingEnvironment processingEnv, ProcessingException e) {
+    public static String getErrorMessage(ProcessingEnvironment processingEnv, ProcessingException e) {
         String errorMessage = "Unexpected error in AndroidAnnotations !\n" //
                 + "You should check if there is already an issue about it on https://github.com/excilys/androidannotations/search?q=" + urlEncodedErrorMessage(e) + "&type=Issues\n" //
                 + "If none exists, please open a new one with the following content and tell us if you can reproduce it or not. Don't forget to give us as much information as you can (like parts of your code in failure).\n";
@@ -49,19 +48,19 @@ public class ErrorHelper {
         return errorMessage;
     }
 
-    private String elementFullString(ProcessingEnvironment processingEnv, Element element) {
+    private static String elementFullString(ProcessingEnvironment processingEnv, Element element) {
         Elements elementUtils = processingEnv.getElementUtils();
         CharArrayWriter writer = new CharArrayWriter();
         elementUtils.printElements(writer, element);
         return writer.toString();
     }
 
-    private String elementContainer(Element element) {
+    private static String elementContainer(Element element) {
         Element enclosingElement = element.getEnclosingElement();
         return enclosingElement != null ? enclosingElement.toString() : "";
     }
 
-    private String annotationProcessorOptions(ProcessingEnvironment processingEnv) {
+    private static String annotationProcessorOptions(ProcessingEnvironment processingEnv) {
         Map<String, String> options = processingEnv.getOptions();
         Set<Entry<String, String>> optionsEntries = options.entrySet();
 
@@ -72,7 +71,7 @@ public class ErrorHelper {
         return result.length() > 2 ? result.substring(0, result.length() - 2) : result;
     }
 
-    private String getJavaCompilerVersion() {
+    private static String getJavaCompilerVersion() {
         ProcessBuilder pb = new ProcessBuilder("javac", "-version");
         pb.redirectErrorStream(true);
 
@@ -95,7 +94,7 @@ public class ErrorHelper {
         return "unknown";
     }
 
-    private String urlEncodedErrorMessage(Throwable e) {
+    private static String urlEncodedErrorMessage(Throwable e) {
         try {
             return URLEncoder.encode(e.getCause().getClass().getName(), "UTF-8");
         } catch (UnsupportedEncodingException e1) {
@@ -103,7 +102,7 @@ public class ErrorHelper {
         }
     }
 
-    private String stackTraceToString(Throwable e) {
+    private static String stackTraceToString(Throwable e) {
         StringWriter writer = new StringWriter();
         PrintWriter pw = new PrintWriter(writer);
         e.printStackTrace(pw);

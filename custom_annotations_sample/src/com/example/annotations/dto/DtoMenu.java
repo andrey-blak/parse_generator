@@ -27,6 +27,12 @@ public class DtoMenu {
     public static class DtoPopup {
         //@XmlElement(name = "menuitem")
         public List<DtoMenuItem> menuitems;
+
+        @XmlElement
+        DtoMenuItem menuItem;
+
+        @XmlElement
+        void setMenuMenu(DtoMenuItem menuItem) {};
     }
 
     public static class DtoMenuItem {
@@ -45,6 +51,9 @@ public class DtoMenu {
         public void setValue(String value) {
             this.value = value;
         }
+
+        @XmlElement
+        void setByte(Byte value) {}
 
         public String getValue() {
             return value;

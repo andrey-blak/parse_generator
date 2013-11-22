@@ -6,12 +6,26 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CodeUtils {
     public static String getName(Element element) {
         return element.getSimpleName().toString();
+    }
+
+    public static String getSetFieldName(String methodName) {
+        if (methodName.startsWith("set")) {
+            methodName = methodName.replaceAll("^set", "");
+            methodName = Introspector.decapitalize(methodName);
+        }
+        return methodName;
+    }
+
+    public static String getWrappedType(String wrapperType) {
+        String wrappedType = wrapperType.replaceAll("^java.lang.", "").toLowerCase();
+        return wrappedType;
     }
 
     public static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {
