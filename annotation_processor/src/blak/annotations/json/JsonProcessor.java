@@ -37,7 +37,6 @@ import java.util.Set;
 
 // TODO
 // class parser
-// validation
 // default name
 // default value
 // required
@@ -45,6 +44,7 @@ import java.util.Set;
 // generics
 // getChar(Json)
 // getClass(Json)
+// validation
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends BaseProcessor {
@@ -94,13 +94,27 @@ public class JsonProcessor extends BaseProcessor {
         String simpleName = CodeUtils.getName(rootElement);
         JType rootElementType = mCodeModel.directClass(simpleName);
 
-        JMethod parse = clazz.method(JMod.PUBLIC, rootElementType, PARSE);
+        createParseString(clazz, rootElementType);
+        createParseJson(clazz, rootElementType, rootElement);
+    }
+
+    private void createParseString(JDefinedClass clazz, JType rootElementType) {
+        JMethod parse = clazz.method(JMod.PUBLIC | JMod.STATIC, rootElementType, PARSE);
         JVar jsonString = parse.param(mCodeModel.ref(STRING), JSON_STRING);
-        mBody = parse.body();
+        JBlock body = parse.body();
 
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
+        JVar json = body.decl(jsonObjectType, JSON, JExpr._new(jsonObjectType).arg(jsonString));
 
-        JVar json = mBody.decl(jsonObjectType, JSON, JExpr._new(jsonObjectType).arg(jsonString));
+        body._return(JExpr.invoke(PARSE).arg(json));
+    }
+
+    private void createParseJson(JDefinedClass clazz, JType rootElementType, TypeElement rootElement) {
+        JMethod parse = clazz.method(JMod.PUBLIC | JMod.STATIC, rootElementType, PARSE);
+        JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
+        JVar json = parse.param(jsonObjectType, JSON);
+        mBody = parse.body();
+
         JVar dto = mBody.decl(rootElementType, DTO, JExpr._new(rootElementType));
 
         processElements(dto, json, rootElement);
