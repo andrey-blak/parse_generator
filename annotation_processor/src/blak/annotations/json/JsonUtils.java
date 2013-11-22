@@ -16,25 +16,25 @@ public class JsonUtils {
     private static final Collection<String> CAST_TYPES = new HashSet<String>();
 
     static {
-        METHODS.put("boolean", BOOLEAN);
-        METHODS.put("java.lang.Boolean", BOOLEAN);
+        METHODS.put(boolean.class.getName(), BOOLEAN);
+        METHODS.put(Boolean.class.getName(), BOOLEAN);
 
-        METHODS.put("int", INT);
-        METHODS.put("java.lang.Integer", INT);
-        METHODS.put("byte", INT);
-        METHODS.put("java.lang.Byte", INT);
-        METHODS.put("short", INT);
-        METHODS.put("java.lang.Short", INT);
+        METHODS.put(int.class.getName(), INT);
+        METHODS.put(Integer.class.getName(), INT);
+        METHODS.put(byte.class.getName(), INT);
+        METHODS.put(Byte.class.getName(), INT);
+        METHODS.put(short.class.getName(), INT);
+        METHODS.put(Short.class.getName(), INT);
 
-        METHODS.put("long", LONG);
-        METHODS.put("java.lang.Long", LONG);
+        METHODS.put(long.class.getName(), LONG);
+        METHODS.put(Long.class.getName(), LONG);
 
-        METHODS.put("double", DOUBLE);
-        METHODS.put("java.lang.Double", DOUBLE);
-        METHODS.put("float", DOUBLE);
-        METHODS.put("java.lang.Float", DOUBLE);
+        METHODS.put(double.class.getName(), DOUBLE);
+        METHODS.put(Double.class.getName(), DOUBLE);
+        METHODS.put(float.class.getName(), DOUBLE);
+        METHODS.put(Float.class.getName(), DOUBLE);
 
-        METHODS.put("java.lang.String", STRING);
+        METHODS.put(String.class.getName(), STRING);
 
         CAST_TYPES.add(byte.class.getName());
         CAST_TYPES.add(Byte.class.getName());
