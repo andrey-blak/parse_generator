@@ -22,44 +22,49 @@ public class DtoMenu {
     public DtoPopup popup;
 
     @XmlElement
-    DtoMenuItem menuItem;
+    InnerOuterClass.DtoMenuItem menuItem;
 
     @XmlElement
     Color color;
 
     public static class DtoPopup {
         //@XmlElement(name = "menuitem")
-        public List<DtoMenuItem> menuitems;
+        public List<InnerOuterClass.DtoMenuItem> menuitems;
 
         @XmlElement
-        DtoMenuItem menuItem;
+        InnerOuterClass.DtoMenuItem menuItem;
 
         @XmlElement
-        void setMenuMenu(DtoMenuItem menuItem) {};
+        void setMenuMenu(InnerOuterClass.DtoMenuItem menuItem) {
+        }
     }
 
-    public static class DtoMenuItem {
-        @XmlElement(name = "onClick")
-        public String onclick;
+    public static class InnerOuterClass {
+        @XmlRootElement
+        public static class DtoMenuItem {
+            @XmlElement(name = "onClick")
+            public String onclick;
 
-        @XmlElement
-        public Float fraction;
+            @XmlElement
+            public Float fraction;
 
-        @XmlElement
-        public byte _byte;
+            @XmlElement
+            public byte _byte;
 
-        private String value;
+            private String value;
 
-        @XmlElement(name = "value")
-        public void setValue(String value) {
-            this.value = value;
-        }
+            @XmlElement(name = "value")
+            public void setValue(String value) {
+                this.value = value;
+            }
 
-        @XmlElement
-        void setByte(Byte value) {}
+            @XmlElement
+            public void setByte(Byte value) {
+            }
 
-        public String getValue() {
-            return value;
+            public String getValue() {
+                return value;
+            }
         }
     }
 

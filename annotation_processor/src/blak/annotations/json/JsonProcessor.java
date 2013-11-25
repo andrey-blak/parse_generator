@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 
 // TODO
-// class parser
 // default name
 // default value
 // required
@@ -88,11 +87,12 @@ public class JsonProcessor extends BaseProcessor {
     }
 
     private void process(RoundEnvironment roundEnv, TypeElement rootElement) throws JClassAlreadyExistsException {
-        String qualifiedName = rootElement.getQualifiedName().toString();
-        JDefinedClass clazz = mCodeModel._class(qualifiedName + JSON_PARSER);
+        String packageName = CodeUtils.getPackage(rootElement).toString();
+        String simpleName = rootElement.getSimpleName().toString();
 
-        String simpleName = CodeUtils.getName(rootElement);
-        JType rootElementType = mCodeModel.directClass(simpleName);
+        JDefinedClass clazz = mCodeModel._class(packageName + "." + simpleName + JSON_PARSER);
+
+        JClass rootElementType = mCodeModel.ref(rootElement.getQualifiedName().toString());
 
         createParseString(clazz, rootElementType);
         createParseJson(clazz, rootElementType, rootElement);
@@ -142,10 +142,10 @@ public class JsonProcessor extends BaseProcessor {
     }
 
     private void processField(JExpression dto, JExpression json, Element element, AnnotationMirror mirror) {
-        String fieldName = CodeUtils.getName(element);
+        String fieldName = element.getSimpleName().toString();
         String key = CodeUtils.extractValue(mirror, NAME, String.class, fieldName);
         TypeMirror fieldType = element.asType();
-        JExpression value = optFieldValue(json, fieldType, key);
+        JExpression value = optFieldValue(json, fieldType, element, key);
         JFieldRef fieldRef = dto.ref(fieldName);
         mBody.assign(fieldRef, value);
     }
@@ -153,13 +153,13 @@ public class JsonProcessor extends BaseProcessor {
     private void processSetter(JExpression dto, JExpression json, Element element, AnnotationMirror mirror) {
         String key = CodeUtils.extractValue(mirror, NAME, String.class, null);
         if (key == null) {
-            String methodName = CodeUtils.getName(element);
+            String methodName = element.getSimpleName().toString();
             key = CodeUtils.getSetFieldName(methodName);
         }
         optMethodValue(dto, json, element, key);
     }
 
-    private JExpression optFieldValue(JExpression json, TypeMirror fieldType, String key) {
+    private JExpression optFieldValue(JExpression json, TypeMirror fieldType, Element field, String key) {
         String typeString = fieldType.toString();
 
         if (char.class.getName().equals(typeString) || Character.class.getName().equals(typeString)) {
@@ -171,7 +171,13 @@ public class JsonProcessor extends BaseProcessor {
             } else if (CodeUtils.isEnum(processingEnv, fieldType)) {
                 return optEnumValue(json, fieldType, key);
             } else {
-                return optClassValue(json, fieldType, key, typeString);
+                Element typeElement = processingEnv.getTypeUtils().asElement(fieldType);
+                AnnotationMirror xmlRootElementAnnotation = CodeUtils.findAnnotationValue(typeElement, XmlRootElement.class);
+                if (xmlRootElementAnnotation != null) {
+                    return optParseValue(json, fieldType, key);
+                } else {
+                    return optClassValue(json, fieldType, field, key, typeString);
+                }
             }
         }
     }
@@ -209,19 +215,31 @@ public class JsonProcessor extends BaseProcessor {
         return enumValue;
     }
 
-    private JExpression optClassValue(JExpression json, TypeMirror typeMirror, String key, String typeString) {
-        JType fieldType = mCodeModel.ref(typeMirror.toString());
+    private JExpression optClassValue(JExpression json, TypeMirror typeMirror, Element field, String key, String typeString) {
+        JType fieldType = mCodeModel.ref(typeString);
         String tempName = getTempName();
         JExpression object = mBody.decl(mCodeModel.ref(typeString), tempName, JExpr._new(fieldType));
 
-        JExpressionImpl getString = json.invoke(OPT_JSON_OBJECT).arg(key);
+        JExpressionImpl jsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
-        JExpression fieldJson = mBody.decl(jsonObjectType, tempName + JSON_SUFFIX, getString);
+        JExpression fieldJson = mBody.decl(jsonObjectType, tempName + JSON_SUFFIX, jsonObject);
 
         TypeElement fieldTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(typeMirror);
         processElements(object, fieldJson, fieldTypeElement);
 
         return object;
+    }
+
+    private JExpression optParseValue(JExpression json, TypeMirror fieldType, String key) {
+        JExpressionImpl jsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
+
+        Element typeElement = processingEnv.getTypeUtils().asElement(fieldType);
+        String packageName = CodeUtils.getPackage((TypeElement) typeElement).toString();
+        String simpleName = typeElement.getSimpleName().toString();
+
+        JClass parserClass = mCodeModel.ref(packageName + "." + simpleName + JSON_PARSER);
+        JExpression parseValue = parserClass.staticInvoke(PARSE).arg(jsonObject);
+        return parseValue;
     }
 
     private void optMethodValue(JExpression dto, JExpression json, Element element, String key) {
@@ -234,8 +252,8 @@ public class JsonProcessor extends BaseProcessor {
         VariableElement valueArgElement = parameters.get(0);
         TypeMirror valueType = valueArgElement.asType();
 
-        JExpression value = optFieldValue(json, valueType, key);
-        String methodName = CodeUtils.getName(method);
+        JExpression value = optFieldValue(json, valueType, valueArgElement, key);
+        String methodName = method.getSimpleName().toString();
         mBody.invoke(dto, methodName).arg(value);
     }
 

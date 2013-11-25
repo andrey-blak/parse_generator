@@ -13,8 +13,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CodeUtils {
-    public static String getName(Element element) {
-        return element.getSimpleName().toString();
+    public static Element getPackage(TypeElement element) {
+        Element packageElement = element.getEnclosingElement();
+        while (packageElement.getEnclosingElement() != null) {
+            packageElement = packageElement.getEnclosingElement();
+        }
+        return packageElement;
     }
 
     public static String getSetFieldName(String methodName) {
