@@ -35,6 +35,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
 // TODO
 // default name
@@ -68,6 +69,7 @@ public class JsonProcessor extends BaseProcessor {
 
     private JCodeModel mCodeModel;
     private JBlock mBody;
+    private Stack<JBlock> mBlockStack = new Stack<JBlock>();
     private int mAutoincrement;
 
     @Override
@@ -241,11 +243,9 @@ public class JsonProcessor extends BaseProcessor {
         TypeElement fieldTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(typeMirror);
 
         JBlock ifNotNull = mBody._if(fieldJson.ne(JExpr._null()))._then();
-        JBlock body = mBody;
-        mBody = ifNotNull;
-        mBody.assign(object, JExpr._new(fieldType));
+        openBlock(ifNotNull);
         processElements(object, fieldJson, fieldTypeElement);
-        mBody = body;
+        closeBlock();
 
         return object;
     }
@@ -279,6 +279,15 @@ public class JsonProcessor extends BaseProcessor {
 
     private String getTempName() {
         return TEMP + mAutoincrement++;
+    }
+
+    private void openBlock(JBlock block) {
+        mBlockStack.push(mBody);
+        mBody = block;
+    }
+
+    private void closeBlock() {
+        mBody = mBlockStack.pop();
     }
 
     @Override
