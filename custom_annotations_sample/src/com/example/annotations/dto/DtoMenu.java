@@ -31,7 +31,6 @@ public class DtoMenu {
         //@XmlElement(name = "menuitem")
         public List<InnerOuterClass.DtoMenuItem> menuitems;
 
-        @XmlElement
         public InnerOuterClass.DtoMenuItem menuItem;
 
         @XmlElement
