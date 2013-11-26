@@ -232,7 +232,7 @@ public class JsonProcessor extends BaseProcessor {
     private JExpression optClassValue(JExpression json, TypeMirror typeMirror, Element field, String key, String typeString) {
         JType fieldType = mCodeModel.ref(typeString);
         String tempName = getTempName();
-        JExpression object = mBody.decl(mCodeModel.ref(typeString), tempName, JExpr._new(fieldType));
+        JVar object = mBody.decl(mCodeModel.ref(typeString), tempName, JExpr._null());
 
         JExpressionImpl optJsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
@@ -243,6 +243,7 @@ public class JsonProcessor extends BaseProcessor {
         JBlock ifNotNull = mBody._if(fieldJson.ne(JExpr._null()))._then();
         JBlock body = mBody;
         mBody = ifNotNull;
+        mBody.assign(object, JExpr._new(fieldType));
         processElements(object, fieldJson, fieldTypeElement);
         mBody = body;
 

@@ -5,6 +5,7 @@ import com.example.annotations.dto.DtoMenuJsonParser;
 import org.json.JSONObject;
 import org.junit.Test;
 
+import static java.lang.System.out;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -49,7 +50,17 @@ public class JsonParserTest {
         assertEquals('s', menu.symbol);
         assertEquals("Smith", menu.name);
         assertEquals(DtoMenu.Color.RED, menu.color);
-        assertNull(menu.menuItem);
-        assertNull(menu.popup);
+    }
+
+    @Test
+    public void testClass() {
+        String jsonString = "{\"menuItem\":{\"onClick\": \"onclick()\", \"fraction\":15.7, \"byte\":61 ,\"value\":\"open new\"}}";
+        DtoMenu menu = DtoMenuJsonParser.parse(jsonString);
+        DtoMenu.InnerOuterClass.DtoMenuItem menuItem = menu.menuItem;
+        assertNotNull(menu.menuItem);
+        assertEquals("onclick()", menu.menuItem.onclick);
+        assertEquals(15.7, (double) menu.menuItem.fraction, 0.0001);
+        assertEquals(61, menu.menuItem._byte);
+        assertEquals("open new", menu.menuItem.getValue());
     }
 }
