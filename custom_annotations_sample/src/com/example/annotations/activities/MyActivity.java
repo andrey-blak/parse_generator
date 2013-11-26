@@ -1,4 +1,4 @@
-package com.example.annotations;
+package com.example.annotations.activities;
 
 import blak.annotations.EActivity;
 import blak.annotations.ViewById;
