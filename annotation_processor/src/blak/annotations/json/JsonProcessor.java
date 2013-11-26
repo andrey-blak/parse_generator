@@ -3,6 +3,7 @@ package blak.annotations.json;
 import blak.annotations.BaseProcessor;
 import blak.annotations.android.ErrorHelper;
 import blak.annotations.android.ProcessingException;
+import blak.annotations.utils.CodeModelUtils;
 import blak.annotations.utils.CodeUtils;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -44,6 +45,7 @@ import java.util.Set;
 // getChar(Json)
 // getClass(Json)
 // validation
+// junit | functional tests
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends BaseProcessor {
@@ -103,6 +105,9 @@ public class JsonProcessor extends BaseProcessor {
         JVar jsonString = parse.param(mCodeModel.ref(STRING), JSON_STRING);
         JBlock body = parse.body();
 
+        CodeModelUtils.ifNullReturnNull(body, jsonString);
+        body._if(jsonString.invoke(IS_EMPTY))._then()._return(JExpr._null());
+
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
         JVar json = body.decl(jsonObjectType, JSON, JExpr._new(jsonObjectType).arg(jsonString));
 
@@ -114,6 +119,8 @@ public class JsonProcessor extends BaseProcessor {
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
         JVar json = parse.param(jsonObjectType, JSON);
         mBody = parse.body();
+
+        CodeModelUtils.ifNullReturnNull(mBody, json);
 
         JVar dto = mBody.decl(rootElementType, DTO, JExpr._new(rootElementType));
 
@@ -209,10 +216,17 @@ public class JsonProcessor extends BaseProcessor {
     }
 
     private JExpression optEnumValue(JExpression json, TypeMirror fieldType, String key) {
-        JExpression enumString = json.invoke(OPT_STRING).arg(key);
         JClass enumType = mCodeModel.ref(fieldType.toString());
+
+        JExpression optString = json.invoke(OPT_STRING).arg(key);
+        JVar enumString = mBody.decl(mCodeModel.ref(STRING), getTempName(), optString);
+
+        JExpression notEmpty = enumString.invoke(IS_EMPTY).not();
         JExpression enumValue = enumType.staticInvoke(VALUE_OF).arg(enumString);
-        return enumValue;
+        JExpression nullValue = JExpr._null();
+        JExpression getEnum = JOp.cond(notEmpty, enumValue, nullValue);
+
+        return getEnum;
     }
 
     private JExpression optClassValue(JExpression json, TypeMirror typeMirror, Element field, String key, String typeString) {
@@ -220,12 +234,17 @@ public class JsonProcessor extends BaseProcessor {
         String tempName = getTempName();
         JExpression object = mBody.decl(mCodeModel.ref(typeString), tempName, JExpr._new(fieldType));
 
-        JExpressionImpl jsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
+        JExpressionImpl optJsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
-        JExpression fieldJson = mBody.decl(jsonObjectType, tempName + JSON_SUFFIX, jsonObject);
+        JExpression fieldJson = mBody.decl(jsonObjectType, tempName + JSON_SUFFIX, optJsonObject);
 
         TypeElement fieldTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(typeMirror);
+
+        JBlock ifNotNull = mBody._if(fieldJson.ne(JExpr._null()))._then();
+        JBlock body = mBody;
+        mBody = ifNotNull;
         processElements(object, fieldJson, fieldTypeElement);
+        mBody = body;
 
         return object;
     }

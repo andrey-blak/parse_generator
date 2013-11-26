@@ -22,20 +22,21 @@ public class DtoMenu {
     public DtoPopup popup;
 
     @XmlElement
-    InnerOuterClass.DtoMenuItem menuItem;
+    public InnerOuterClass.DtoMenuItem menuItem;
 
     @XmlElement
-    Color color;
+    public Color color;
 
     public static class DtoPopup {
         //@XmlElement(name = "menuitem")
         public List<InnerOuterClass.DtoMenuItem> menuitems;
 
         @XmlElement
-        InnerOuterClass.DtoMenuItem menuItem;
+        public InnerOuterClass.DtoMenuItem menuItem;
 
         @XmlElement
-        void setMenuMenu(InnerOuterClass.DtoMenuItem menuItem) {
+        void setMenuMenu(InnerOuterClass.DtoMenuItem value) {
+            menuItem = value;
         }
     }
 
@@ -48,7 +49,6 @@ public class DtoMenu {
             @XmlElement
             public Float fraction;
 
-            @XmlElement
             public byte _byte;
 
             private String value;
@@ -60,6 +60,7 @@ public class DtoMenu {
 
             @XmlElement
             public void setByte(Byte value) {
+                _byte= value;
             }
 
             public String getValue() {
