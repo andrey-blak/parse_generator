@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProcessingUtils {
-    public static Element getPackage(TypeElement element) {
+    public static Element getPackage(Element element) {
         Element packageElement = element.getEnclosingElement();
         while (packageElement.getEnclosingElement() != null) {
             packageElement = packageElement.getEnclosingElement();

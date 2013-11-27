@@ -1,8 +1,7 @@
 package blak.annotations.json;
 
 import blak.annotations.BaseProcessor;
-import org.androidannotations.ErrorHelper;
-import org.androidannotations.ProcessingException;
+import blak.annotations.Java;
 import blak.annotations.utils.CodeModelUtils;
 import blak.annotations.utils.ProcessingUtils;
 import com.sun.codemodel.JBlock;
@@ -20,6 +19,8 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
+import org.androidannotations.ErrorHelper;
+import org.androidannotations.ProcessingException;
 import org.json.JSONObject;
 
 import javax.annotation.processing.RoundEnvironment;
@@ -36,7 +37,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
 
 // TODO
 // required
@@ -48,32 +48,27 @@ import java.util.Stack;
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends BaseProcessor {
     private static final String JSON_PARSER = "JsonParser";
-    private static final String OPT = "opt";
     private static final String PARSE = "parse";
     private static final String JSON_STRING = "jsonString";
     private static final String JSON = "json";
     private static final String DTO = "dto";
     private static final String NAME = "name";
     private static final String DEFAULT_VALUE = "defaultValue";
-    private static final String OPT_STRING = "optString";
-    private static final String STRING = "String";
-    private static final String IS_EMPTY = "isEmpty";
-    private static final String CHAR_AT = "charAt";
     private static final char NULL_CHAR = '\0';
-    private static final String OPT_JSON_OBJECT = "optJSONObject";
     private static final String JSON_SUFFIX = "Json";
-    private static final String TEMP = "temp";
-    private static final String VALUE_OF = "valueOf";
+    private static final String TEMP = "temp"; // Nns
 
     private JCodeModel mCodeModel;
     private JBlock mBody;
-    private final Stack<JBlock> mBlockStack = new Stack<JBlock>();
     private int mAutoincrement;
+
+    private JClass mStringClass;
+    private JClass mJsonClass;
 
     @Override
     public boolean processAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        initCodeModel();
         try {
-            mCodeModel = new JCodeModel();
             Set<? extends Element> rootElements = roundEnv.getElementsAnnotatedWith(XmlRootElement.class);
             for (Element rootElement : rootElements) {
                 mAutoincrement = 0;
@@ -88,11 +83,15 @@ public class JsonProcessor extends BaseProcessor {
         return false;
     }
 
-    private void process(RoundEnvironment roundEnv, TypeElement rootElement) throws JClassAlreadyExistsException {
-        String packageName = ProcessingUtils.getPackage(rootElement).toString();
-        String simpleName = rootElement.getSimpleName().toString();
+    private void initCodeModel() {
+        mCodeModel = new JCodeModel();
+        mStringClass = mCodeModel.ref(String.class);
+        mJsonClass = mCodeModel.ref(JSONObject.class);
+    }
 
-        JDefinedClass clazz = mCodeModel._class(packageName + "." + simpleName + JSON_PARSER);
+    private void process(RoundEnvironment roundEnv, TypeElement rootElement) throws JClassAlreadyExistsException {
+        String parserFullName = getFullParserName(rootElement);
+        JDefinedClass clazz = mCodeModel._class(parserFullName);
 
         JClass rootElementType = mCodeModel.ref(rootElement.getQualifiedName().toString());
 
@@ -102,13 +101,13 @@ public class JsonProcessor extends BaseProcessor {
 
     private void createParseString(JDefinedClass clazz, JType rootElementType) {
         JMethod parse = clazz.method(JMod.PUBLIC | JMod.STATIC, rootElementType, PARSE);
-        JVar jsonString = parse.param(mCodeModel.ref(STRING), JSON_STRING);
+        JVar jsonString = parse.param(mStringClass, JSON_STRING);
         JBlock body = parse.body();
 
         CodeModelUtils.ifNullReturnNull(body, jsonString);
-        body._if(jsonString.invoke(IS_EMPTY))._then()._return(JExpr._null());
+        body._if(jsonString.invoke(Java.IS_EMPTY))._then()._return(JExpr._null());
 
-        JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
+        JClass jsonObjectType = mJsonClass;
         JVar json = body.decl(jsonObjectType, JSON, JExpr._new(jsonObjectType).arg(jsonString));
 
         body._return(JExpr.invoke(PARSE).arg(json));
@@ -116,7 +115,7 @@ public class JsonProcessor extends BaseProcessor {
 
     private void createParseJson(JDefinedClass clazz, JType rootElementType, TypeElement rootElement) {
         JMethod parse = clazz.method(JMod.PUBLIC | JMod.STATIC, rootElementType, PARSE);
-        JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
+        JClass jsonObjectType = mJsonClass;
         JVar json = parse.param(jsonObjectType, JSON);
         mBody = parse.body();
 
@@ -153,9 +152,12 @@ public class JsonProcessor extends BaseProcessor {
         String key = ProcessingUtils.extractValue(mirror, NAME, String.class, fieldName);
         TypeMirror fieldType = element.asType();
         String defaultValue = ProcessingUtils.extractValue(mirror, DEFAULT_VALUE, String.class, null);
+
+        JBlock block = mBody;
         JExpression value = optFieldValue(json, fieldType, element, key, defaultValue);
         JFieldRef fieldRef = dto.ref(fieldName);
         mBody.assign(fieldRef, value);
+        mBody = block;
     }
 
     private void processSetter(JExpression dto, JExpression json, Element element, AnnotationMirror mirror) {
@@ -190,7 +192,7 @@ public class JsonProcessor extends BaseProcessor {
     }
 
     private JExpression optPrimitiveValue(JExpression json, TypeMirror fieldType, String key, String typeString, String jsonGetType, String defaultValue) {
-        String optMethod = OPT + jsonGetType;
+        String optMethod = Json.OPT + jsonGetType;
         JExpression defaultExpr = CodeModelUtils.getDefaultValue(fieldType, defaultValue);
 
         JInvocation getValueInvoke = json.invoke(optMethod).arg(key);
@@ -213,12 +215,12 @@ public class JsonProcessor extends BaseProcessor {
     }
 
     private JExpression optCharValue(JExpression json, TypeMirror fieldType, String key, String defaultValue) {
-        JExpression getString = json.invoke(OPT_STRING).arg(key);
+        JExpression getString = json.invoke(Json.OPT_STRING).arg(key);
 
-        JVar charString = mBody.decl(mCodeModel.ref(STRING), getTempName(), getString);
+        JVar charString = mBody.decl(mStringClass, getTempName(), getString);
 
-        JExpression notEmpty = charString.invoke(IS_EMPTY).not();
-        JExpression firstChar = charString.invoke(CHAR_AT).arg(JExpr.lit(0));
+        JExpression notEmpty = charString.invoke(Java.IS_EMPTY).not();
+        JExpression firstChar = charString.invoke(Java.CHAR_AT).arg(JExpr.lit(0));
 
         JExpression defaultChar;
         if (defaultValue != null) {
@@ -234,11 +236,11 @@ public class JsonProcessor extends BaseProcessor {
     private JExpression optEnumValue(JExpression json, TypeMirror fieldType, String key) {
         JClass enumType = mCodeModel.ref(fieldType.toString());
 
-        JExpression optString = json.invoke(OPT_STRING).arg(key);
-        JVar enumString = mBody.decl(mCodeModel.ref(STRING), getTempName(), optString);
+        JExpression optString = json.invoke(Json.OPT_STRING).arg(key);
+        JVar enumString = mBody.decl(mStringClass, getTempName(), optString);
 
-        JExpression notEmpty = enumString.invoke(IS_EMPTY).not();
-        JExpression enumValue = enumType.staticInvoke(VALUE_OF).arg(enumString);
+        JExpression notEmpty = enumString.invoke(Java.IS_EMPTY).not();
+        JExpression enumValue = enumType.staticInvoke(Java.VALUE_OF).arg(enumString);
         JExpression nullValue = JExpr._null();
         JExpression getEnum = JOp.cond(notEmpty, enumValue, nullValue);
 
@@ -248,31 +250,25 @@ public class JsonProcessor extends BaseProcessor {
     private JExpression optClassValue(JExpression json, TypeMirror typeMirror, String key, String typeString) {
         JType fieldType = mCodeModel.ref(typeString);
         String tempName = getTempName();
-        JVar object = mBody.decl(mCodeModel.ref(typeString), tempName, JExpr._null());
 
-        JExpressionImpl optJsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
-        JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
+        JExpressionImpl optJsonObject = json.invoke(Json.OPT_JSON_OBJECT).arg(key);
+        JClass jsonObjectType = mJsonClass;
         JExpression fieldJson = mBody.decl(jsonObjectType, tempName + JSON_SUFFIX, optJsonObject);
 
         TypeElement fieldTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(typeMirror);
 
         JBlock ifNotNull = mBody._if(fieldJson.ne(JExpr._null()))._then();
-        openBlock(ifNotNull);
-        mBody.assign(object, JExpr._new(fieldType));
+        mBody = ifNotNull;
+        JVar object = mBody.decl(fieldType, tempName, JExpr._new(fieldType));
         processElements(object, fieldJson, fieldTypeElement);
-        closeBlock();
-
         return object;
     }
 
     private JExpression optParseValue(JExpression json, TypeMirror fieldType, String key) {
-        JExpressionImpl jsonObject = json.invoke(OPT_JSON_OBJECT).arg(key);
-
+        JExpressionImpl jsonObject = json.invoke(Json.OPT_JSON_OBJECT).arg(key);
         Element typeElement = processingEnv.getTypeUtils().asElement(fieldType);
-        String packageName = ProcessingUtils.getPackage((TypeElement) typeElement).toString();
-        String simpleName = typeElement.getSimpleName().toString();
-
-        JClass parserClass = mCodeModel.ref(packageName + "." + simpleName + JSON_PARSER);
+        String parserFullName = getFullParserName(typeElement);
+        JClass parserClass = mCodeModel.ref(parserFullName);
         JExpression parseValue = parserClass.staticInvoke(PARSE).arg(jsonObject);
         return parseValue;
     }
@@ -296,13 +292,11 @@ public class JsonProcessor extends BaseProcessor {
         return TEMP + mAutoincrement++;
     }
 
-    private void openBlock(JBlock block) {
-        mBlockStack.push(mBody);
-        mBody = block;
-    }
-
-    private void closeBlock() {
-        mBody = mBlockStack.pop();
+    private String getFullParserName(Element rootElement) {
+        String packageName = ProcessingUtils.getPackage(rootElement).toString();
+        String simpleName = rootElement.getSimpleName().toString();
+        String parserFullName = packageName + "." + simpleName + JSON_PARSER;
+        return parserFullName;
     }
 
     @Override
