@@ -13,22 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package blak.annotations.android;
+package org.androidannotations;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
-import java.io.BufferedReader;
 import java.io.CharArrayWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class ErrorHelper {
     public static String getErrorMessage(ProcessingEnvironment processingEnv, ProcessingException e) {

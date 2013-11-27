@@ -1,9 +1,9 @@
 package blak.annotations;
 
 import blak.annotations.utils.ALog;
-import blak.annotations.utils.OriginatingElements;
-import blak.annotations.utils.ResourceCodeWriter;
-import blak.annotations.utils.SourceCodeWriter;
+import org.androidannotations.OriginatingElements;
+import org.androidannotations.ResourceCodeWriter;
+import org.androidannotations.SourceCodeWriter;
 import com.sun.codemodel.JCodeModel;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -11,8 +11,6 @@ import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
 import java.io.IOException;
 import java.util.Collection;

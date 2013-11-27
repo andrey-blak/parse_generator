@@ -1,8 +1,8 @@
 package blak.annotations.json;
 
 import blak.annotations.BaseProcessor;
-import blak.annotations.android.ErrorHelper;
-import blak.annotations.android.ProcessingException;
+import org.androidannotations.ErrorHelper;
+import org.androidannotations.ProcessingException;
 import blak.annotations.utils.CodeModelUtils;
 import blak.annotations.utils.ProcessingUtils;
 import com.sun.codemodel.JBlock;
