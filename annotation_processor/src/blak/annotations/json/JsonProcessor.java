@@ -173,22 +173,20 @@ public class JsonProcessor extends BaseProcessor {
 
         if (ProcessingUtils.isChar(typeString)) {
             return optCharValue(json, fieldType, key, defaultValue);
-        } else {
-            String jsonGetType = JsonUtils.getGetType(typeString);
-            if (jsonGetType != null) {
-                return optPrimitiveValue(json, fieldType, key, typeString, jsonGetType, defaultValue);
-            } else if (ProcessingUtils.isEnum(processingEnv, fieldType)) {
-                return optEnumValue(json, fieldType, key);
-            } else {
-                Element typeElement = processingEnv.getTypeUtils().asElement(fieldType);
-                AnnotationMirror xmlRootElementAnnotation = ProcessingUtils.findAnnotationValue(typeElement, XmlRootElement.class);
-                if (xmlRootElementAnnotation != null) {
-                    return optParseValue(json, fieldType, key);
-                } else {
-                    return optClassValue(json, fieldType, key, typeString);
-                }
-            }
         }
+        String jsonGetType = JsonUtils.getGetType(typeString);
+        if (jsonGetType != null) {
+            return optPrimitiveValue(json, fieldType, key, typeString, jsonGetType, defaultValue);
+        }
+        if (ProcessingUtils.isEnum(processingEnv, fieldType)) {
+            return optEnumValue(json, fieldType, key);
+        }
+        Element typeElement = processingEnv.getTypeUtils().asElement(fieldType);
+        AnnotationMirror xmlRootElementAnnotation = ProcessingUtils.findAnnotationValue(typeElement, XmlRootElement.class);
+        if (xmlRootElementAnnotation != null) {
+            return optParseValue(json, fieldType, key);
+        }
+        return optClassValue(json, fieldType, key, typeString);
     }
 
     private JExpression optPrimitiveValue(JExpression json, TypeMirror fieldType, String key, String typeString, String jsonGetType, String defaultValue) {
@@ -221,10 +219,14 @@ public class JsonProcessor extends BaseProcessor {
 
         JExpression notEmpty = charString.invoke(IS_EMPTY).not();
         JExpression firstChar = charString.invoke(CHAR_AT).arg(JExpr.lit(0));
-        JExpression defaultChar = CodeModelUtils.getDefaultValue(fieldType, defaultValue);
-        if (defaultChar == null) {
+
+        JExpression defaultChar;
+        if (defaultValue != null) {
+            defaultChar = CodeModelUtils.getDefaultValue(fieldType, defaultValue);
+        } else {
             defaultChar = JExpr.lit(NULL_CHAR);
         }
+
         JExpression getChar = JOp.cond(notEmpty, firstChar, defaultChar);
         return getChar;
     }

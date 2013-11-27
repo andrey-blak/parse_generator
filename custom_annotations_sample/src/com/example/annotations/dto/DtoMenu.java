@@ -62,6 +62,7 @@ public class DtoMenu {
                 _byte= value;
             }
 
+            @XmlElement
             public String getValue() {
                 return value;
             }

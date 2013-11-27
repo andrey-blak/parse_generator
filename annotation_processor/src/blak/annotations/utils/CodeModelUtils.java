@@ -21,11 +21,13 @@ public class CodeModelUtils {
         if (defaultValue == null) {
             return null;
         }
+
         String typeString = typeMirror.toString();
         if (ProcessingUtils.isString(typeString)) {
             String quotified = JExpr.quotify('\"', defaultValue);
             return JExpr.direct(quotified);
-        } else if (ProcessingUtils.isChar(typeString)) {
+        }
+        if (ProcessingUtils.isChar(typeString)) {
             String quotified = JExpr.quotify('\'', defaultValue);
             return JExpr.direct(quotified);
         }
