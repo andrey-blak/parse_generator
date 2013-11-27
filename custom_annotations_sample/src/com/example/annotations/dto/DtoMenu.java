@@ -6,7 +6,7 @@ import java.util.List;
 
 @XmlRootElement
 public class DtoMenu {
-    @XmlElement(name = "Id", defaultValue = "42")
+    @XmlElement(name = "Id")
     public int id;
 
     @XmlElement

@@ -12,7 +12,7 @@ import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CodeUtils {
+public class ProcessingUtils {
     public static Element getPackage(TypeElement element) {
         Element packageElement = element.getEnclosingElement();
         while (packageElement.getEnclosingElement() != null) {
@@ -42,6 +42,18 @@ public class CodeUtils {
             }
         }
         return false;
+    }
+
+    public static boolean isChar(TypeMirror type) {
+        return isChar(type.toString());
+    }
+
+    public static boolean isChar(String type) {
+        return type.equals(char.class.getName()) || type.equals(Character.class.getName());
+    }
+
+    public static boolean isString(String typeString) {
+        return typeString.equals(String.class.getName());
     }
 
     public static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {
