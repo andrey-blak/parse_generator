@@ -29,11 +29,6 @@ public class ProcessingUtils {
         return methodName;
     }
 
-    public static String getWrappedType(String wrapperType) {
-        String wrappedType = wrapperType.replaceAll("^java.lang.", "").toLowerCase();
-        return wrappedType;
-    }
-
     public static boolean isEnum(ProcessingEnvironment processingEnv, TypeMirror typeMirror) {
         String enumType = Enum.class.getName() + "<" + typeMirror + ">";
         for (TypeMirror type : processingEnv.getTypeUtils().directSupertypes(typeMirror)) {
@@ -54,6 +49,10 @@ public class ProcessingUtils {
 
     public static boolean isString(String typeString) {
         return typeString.equals(String.class.getName());
+    }
+
+    public static boolean haveAnnotation(Element element, Class annotationClass) {
+        return (findAnnotationValue(element, annotationClass) != null);
     }
 
     public static <T> AnnotationMirror findAnnotationValue(Element element, Class<T> annotationClass) {
