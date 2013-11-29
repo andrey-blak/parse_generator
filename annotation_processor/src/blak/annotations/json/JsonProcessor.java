@@ -27,16 +27,20 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 import java.util.Set;
 
 // TODO
+// arrays & collections (list, array[], set, collection, subclasses)
+// map (from jsonObject keySet)
 // required
-// arrays & collections (maps?)
 // generics
-// validation
+// check boxify/unboxify (from JType)
 // extract constants
+// validation
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends BaseProcessor {
@@ -134,7 +138,8 @@ public class JsonProcessor extends BaseProcessor {
 
     private void processField(JExpression dto, JExpression json, Element element, AnnotationMirror mirror, String defaultValue) {
         String fieldName = element.getSimpleName().toString();
-        String key = ProcessingUtils.extractValue(mirror, NAME, String.class, fieldName);
+        String keyString = ProcessingUtils.extractValue(mirror, NAME, String.class, fieldName);
+        JExpression key = JExpr.lit(keyString);
         TypeMirror fieldType = element.asType();
 
         JBlock block = mBlock;
@@ -145,16 +150,17 @@ public class JsonProcessor extends BaseProcessor {
     }
 
     private void processSetter(JExpression dto, JExpression json, Element element, AnnotationMirror mirror, String defaultValue) {
-        String key = ProcessingUtils.extractValue(mirror, NAME, String.class, null);
-        if (key == null) {
+        String keyString = ProcessingUtils.extractValue(mirror, NAME, String.class, null);
+        if (keyString == null) {
             String methodName = element.getSimpleName().toString();
-            key = ProcessingUtils.getSetFieldName(methodName);
+            keyString = ProcessingUtils.getSetFieldName(methodName);
         }
         ExecutableElement method = (ExecutableElement) element;
+        JExpression key = JExpr.lit(keyString);
         mGenerator.optMethodValue(this, mBlock, dto, json, method, key, defaultValue);
     }
 
-    public JExpression optFieldValue(JExpression json, TypeMirror fieldType, String key, String defaultValue) {
+    public JExpression optFieldValue(JExpression json, TypeMirror fieldType, JExpression key, String defaultValue) {
         String typeString = fieldType.toString();
 
         if (ProcessingUtils.isChar(typeString)) {
@@ -167,7 +173,14 @@ public class JsonProcessor extends BaseProcessor {
         if (ProcessingUtils.isEnum(processingEnv, fieldType)) {
             return mGenerator.optEnumValue(mBlock, json, fieldType, key);
         }
-        TypeElement fieldTypeElement = (TypeElement) processingEnv.getTypeUtils().asElement(fieldType);
+
+        Types typeUtils = processingEnv.getTypeUtils();
+        TypeElement fieldTypeElement = (TypeElement) typeUtils.asElement(fieldType);
+
+        if (ProcessingUtils.isAssignableFrom(typeUtils, fieldType, List.class)) {
+            return mGenerator.optListValue(this, mBlock, json, fieldType, key);
+        }
+
         if (ProcessingUtils.haveAnnotation(fieldTypeElement, XmlRootElement.class)) {
             return mGenerator.optParseValue(json, fieldTypeElement, key);
         }

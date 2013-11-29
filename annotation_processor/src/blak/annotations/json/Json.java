@@ -9,4 +9,6 @@ class Json {
     static final String OPT = "opt";
     static final String OPT_STRING = "optString";
     static final String OPT_JSON_OBJECT = "optJSONObject";
+    static final String OPT_JSON_ARRAY = "optJSONArray";
+    static final String LENGTH = "length";
 }

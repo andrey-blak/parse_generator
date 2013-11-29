@@ -8,8 +8,10 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import java.beans.Introspector;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProcessingUtils {
@@ -33,6 +35,19 @@ public class ProcessingUtils {
         String enumType = Enum.class.getName() + "<" + typeMirror + ">";
         for (TypeMirror type : processingEnv.getTypeUtils().directSupertypes(typeMirror)) {
             if (type.toString().equals(enumType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isAssignableFrom(Types typeUtils, TypeMirror typeMirror, Class clazz) {
+        String className = clazz.getName();
+        if (typeMirror.toString().startsWith(className)) {
+            return true;
+        }
+        for (TypeMirror type : typeUtils.directSupertypes(typeMirror)) {
+            if (type.toString().startsWith(className)) {
                 return true;
             }
         }

@@ -9,20 +9,24 @@ import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JExpressionImpl;
+import com.sun.codemodel.JForLoop;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -56,7 +60,7 @@ class JsonParseGenerator {
         body._return(JExpr.invoke(JsonProcessor.PARSE).arg(json));
     }
 
-    public JExpression optPrimitiveValue(JExpression json, TypeMirror fieldType, String jsonGetType, String key, String defaultValue) {
+    public JExpression optPrimitiveValue(JExpression json, TypeMirror fieldType, String jsonGetType, JExpression key, String defaultValue) {
         String typeString = fieldType.toString();
         String optMethod = Json.OPT + jsonGetType;
         JExpression defaultExpr = CodeModelUtils.getDefaultValue(typeString, defaultValue);
@@ -83,7 +87,7 @@ class JsonParseGenerator {
         return JExpr.cast(castType, value);
     }
 
-    public JExpression optCharValue(JBlock block, JExpression json, String key, String defaultValue) {
+    public JExpression optCharValue(JBlock block, JExpression json, JExpression key, String defaultValue) {
         JVar tempString = optTempString(block, json, key);
         JExpression notEmpty = CodeModelUtils.notEmpty(tempString);
         JExpression firstChar = tempString.invoke(Java.CHAR_AT).arg(JExpr.lit(0));
@@ -92,7 +96,7 @@ class JsonParseGenerator {
         return getChar;
     }
 
-    public JExpression optEnumValue(JBlock block, JExpression json, TypeMirror type, String key) {
+    public JExpression optEnumValue(JBlock block, JExpression json, TypeMirror type, JExpression key) {
         JVar tempString = optTempString(block, json, key);
         JClass enumType = mCodeModel.ref(type.toString());
 
@@ -103,7 +107,7 @@ class JsonParseGenerator {
         return getEnum;
     }
 
-    public JExpression optParseValue(JExpression json, Element typeElement, String key) {
+    public JExpression optParseValue(JExpression json, Element typeElement, JExpression key) {
         JExpression jsonObject = json.invoke(Json.OPT_JSON_OBJECT).arg(key);
         String parserFullName = JsonProcessor.getFullParserName(typeElement);
         JClass parserClass = mCodeModel.ref(parserFullName);
@@ -111,7 +115,7 @@ class JsonParseGenerator {
         return parseValue;
     }
 
-    public JExpression optClassValue(JsonProcessor processor, JBlock block, JExpression json, TypeMirror typeMirror, TypeElement fieldTypeElement, String key) {
+    public JExpression optClassValue(JsonProcessor processor, JBlock block, JExpression json, TypeMirror typeMirror, TypeElement fieldTypeElement, JExpression key) {
         String typeString = typeMirror.toString();
         JType fieldType = mCodeModel.ref(typeString);
         String tempName = getTempName();
@@ -120,14 +124,14 @@ class JsonParseGenerator {
         JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
         JExpression fieldJson = block.decl(jsonObjectType, tempName + JsonProcessor.JSON_SUFFIX, optJsonObject);
 
-        JBlock ifNotNull = block._if(fieldJson.ne(JExpr._null()))._then();
+        JBlock ifNotNull = CodeModelUtils.ifNotNull(block, fieldJson);
         processor.setBlock(ifNotNull);
         JVar object = ifNotNull.decl(fieldType, tempName, JExpr._new(fieldType));
         processor.processElements(object, fieldJson, fieldTypeElement);
         return object;
     }
 
-    public void optMethodValue(JsonProcessor processor, JBlock block, JExpression dto, JExpression json, ExecutableElement method, String key, String defaultValue) {
+    public void optMethodValue(JsonProcessor processor, JBlock block, JExpression dto, JExpression json, ExecutableElement method, JExpression key, String defaultValue) {
         List<? extends VariableElement> parameters = method.getParameters();
         if (parameters.isEmpty()) {
             return;
@@ -140,7 +144,33 @@ class JsonParseGenerator {
         block.invoke(dto, methodName).arg(value);
     }
 
-    private JVar optTempString(JBlock block, JExpression json, String key) {
+    public JExpression optListValue(JsonProcessor processor, JBlock block, JExpression json, TypeMirror typeMirror, JExpression key) {
+        JVar jsonArray = block.decl(mCodeModel._ref(JSONArray.class), getTempName(), json.invoke(Json.OPT_JSON_ARRAY).arg(key));
+        JBlock ifNotNull = CodeModelUtils.ifNotNull(block, jsonArray);
+
+        String typeString = typeMirror.toString();
+        JClass fieldClass = mCodeModel.ref(typeString);
+        String concreteTypeString = typeString.replaceAll("^" + List.class.getName(), ArrayList.class.getName());
+        JClass concreteClass = mCodeModel.ref(concreteTypeString);
+
+        JVar list = ifNotNull.decl(fieldClass, getTempName(), JExpr._new(concreteClass));
+
+        JForLoop forLoop = ifNotNull._for();
+        JVar iVar = forLoop.init(mCodeModel.INT, getTempName(), JExpr.lit(0));
+        forLoop.test(JOp.lt(iVar, jsonArray.invoke(Json.LENGTH)));
+        forLoop.update(JOp.incr(iVar));
+        JBlock forBody = forLoop.body();
+
+        DeclaredType declaredType = (DeclaredType) typeMirror;
+        TypeMirror itemType = declaredType.getTypeArguments().get(0);
+        processor.setBlock(forBody);
+        JExpression jsonItem = processor.optFieldValue(jsonArray, itemType, JExpr.direct(iVar.name()), null);
+        forBody.invoke(list, Java.ADD).arg(jsonItem);
+        processor.setBlock(ifNotNull);
+        return list;
+    }
+
+    private JVar optTempString(JBlock block, JExpression json, JExpression key) {
         JExpression optString = json.invoke(Json.OPT_STRING).arg(key);
         JVar tempString = block.decl(mStringClass, getTempName(), optString);
         return tempString;

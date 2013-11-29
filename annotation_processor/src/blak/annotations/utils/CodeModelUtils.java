@@ -40,4 +40,8 @@ public class CodeModelUtils {
     public static JExpression notEmpty(JExpression stringVar) {
         return stringVar.invoke(Java.IS_EMPTY).not();
     }
+
+    public static JBlock ifNotNull(JBlock block, JExpression expression) {
+        return block._if(expression.ne(JExpr._null()))._then();
+    }
 }
