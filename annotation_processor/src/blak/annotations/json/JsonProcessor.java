@@ -35,12 +35,10 @@ import java.util.List;
 import java.util.Set;
 
 // TODO
-// arrays & collections (set, collection, subclasses)
+// collections
 // map (from jsonObject keySet)
-// required
 // generics
 // check boxify/unboxify (from JType)
-// extract constants
 // validation
 
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
@@ -181,6 +179,9 @@ public class JsonProcessor extends BaseProcessor {
         if (ProcessingUtils.isAssignableFrom(typeUtils, fieldType, List.class)) {
             return mGenerator.optListValue(this, mBlock, json, fieldType, key);
         }
+        if (ProcessingUtils.isAssignableFrom(typeUtils, fieldType, Set.class)) {
+            return mGenerator.optListValue(this, mBlock, json, fieldType, key);
+        }
 
         if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
@@ -190,6 +191,7 @@ public class JsonProcessor extends BaseProcessor {
         if (ProcessingUtils.haveAnnotation(fieldTypeElement, XmlRootElement.class)) {
             return mGenerator.optParseValue(json, fieldTypeElement, key);
         }
+
         return mGenerator.optClassValue(this, mBlock, json, fieldType, fieldTypeElement, key);
     }
 

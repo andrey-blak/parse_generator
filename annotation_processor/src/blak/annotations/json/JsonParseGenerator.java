@@ -1,7 +1,6 @@
 package blak.annotations.json;
 
 import blak.annotations.Java;
-import blak.annotations.utils.ALog;
 import blak.annotations.utils.CodeModelUtils;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -28,7 +27,6 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -118,8 +116,7 @@ class JsonParseGenerator {
     }
 
     public JExpression optClassValue(JsonProcessor processor, JBlock block, JExpression json, TypeMirror typeMirror, TypeElement fieldTypeElement, JExpression key) {
-        String typeString = typeMirror.toString();
-        JType fieldType = mCodeModel.ref(typeString);
+        JClass fieldType = mCodeModel.ref(fieldTypeElement.getQualifiedName().toString());
         String tempName = getTempName();
 
         JExpressionImpl optJsonObject = json.invoke(Json.OPT_JSON_OBJECT).arg(key);
@@ -152,7 +149,7 @@ class JsonParseGenerator {
 
         String typeString = typeMirror.toString();
         JClass fieldClass = mCodeModel.ref(typeString);
-        String concreteTypeString = typeString.replaceAll("^" + List.class.getName(), ArrayList.class.getName());
+        String concreteTypeString = JavaUtils.getConcreteClassName(typeString);
         JClass concreteClass = mCodeModel.ref(concreteTypeString);
         JVar list = ifNotNull.decl(fieldClass, getTempName(), JExpr._new(concreteClass));
 
