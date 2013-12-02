@@ -14,12 +14,12 @@ public class JsonTest {
         JSONObject json = new JSONObject(jsonString);
 
         JSONArray jsonArray = json.getJSONArray("stringList");
-        List<String> list = new ArrayList<String>(jsonArray.length());
+        String[] array = new String[jsonArray.length()];
 
         for (int i = 0; i < jsonArray.length(); i++) {
-            list.add(jsonArray.getString(i));
+            array[i] = jsonArray.getString(i);
         }
-        for (String string : list) {
+        for (String string : array) {
             out.println(string);
         }
     }

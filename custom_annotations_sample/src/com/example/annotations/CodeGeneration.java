@@ -12,6 +12,7 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 
 import java.io.File;
+import static java.lang.System.out;
 
 public class CodeGeneration {
     private static final String GENERATION_SUFFIX = "_";
@@ -24,6 +25,9 @@ public class CodeGeneration {
 
         generateExtends(codeModel, clazz, qualifiedName);
         generateInit(codeModel, clazz);
+
+        out.println(codeModel.ref(java.lang.Boolean[].class));
+        out.println(codeModel.ref("java.lang.Boolean[]"));
 
         File destDir = new File("custom_annotations_sample/gen");
         destDir.mkdirs();

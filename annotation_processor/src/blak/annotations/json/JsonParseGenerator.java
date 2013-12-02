@@ -1,6 +1,7 @@
 package blak.annotations.json;
 
 import blak.annotations.Java;
+import blak.annotations.utils.ALog;
 import blak.annotations.utils.CodeModelUtils;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -23,6 +24,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -152,7 +154,6 @@ class JsonParseGenerator {
         JClass fieldClass = mCodeModel.ref(typeString);
         String concreteTypeString = typeString.replaceAll("^" + List.class.getName(), ArrayList.class.getName());
         JClass concreteClass = mCodeModel.ref(concreteTypeString);
-
         JVar list = ifNotNull.decl(fieldClass, getTempName(), JExpr._new(concreteClass));
 
         JForLoop forLoop = ifNotNull._for();
@@ -168,6 +169,29 @@ class JsonParseGenerator {
         forBody.invoke(list, Java.ADD).arg(jsonItem);
         processor.setBlock(ifNotNull);
         return list;
+    }
+
+    public JExpression optArrayValue(JsonProcessor processor, JBlock block, JExpression json, ArrayType arrayType, JExpression key) {
+        JVar jsonArray = block.decl(mCodeModel._ref(JSONArray.class), getTempName(), json.invoke(Json.OPT_JSON_ARRAY).arg(key));
+        JBlock ifNotNull = CodeModelUtils.ifNotNull(block, jsonArray);
+
+        String typeString = arrayType.toString();
+        JClass fieldClass = mCodeModel.ref(typeString);
+        TypeMirror itemTypeMirror = arrayType.getComponentType();
+        JType itemType = mCodeModel.ref(itemTypeMirror.toString());
+        JVar array = ifNotNull.decl(fieldClass, getTempName(), JExpr.newArray(itemType, jsonArray.invoke(Json.LENGTH)));
+
+        JForLoop forLoop = ifNotNull._for();
+        JVar iVar = forLoop.init(mCodeModel.INT, getTempName(), JExpr.lit(0));
+        forLoop.test(JOp.lt(iVar, jsonArray.invoke(Json.LENGTH)));
+        forLoop.update(JOp.incr(iVar));
+        JBlock forBody = forLoop.body();
+
+        processor.setBlock(forBody);
+        JExpression jsonItem = processor.optFieldValue(jsonArray, itemTypeMirror, JExpr.direct(iVar.name()), null);
+        forBody.assign(JExpr.component(array, iVar), jsonItem);
+        processor.setBlock(ifNotNull);
+        return array;
     }
 
     private JVar optTempString(JBlock block, JExpression json, JExpression key) {

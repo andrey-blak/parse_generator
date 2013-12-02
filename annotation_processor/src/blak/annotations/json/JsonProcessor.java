@@ -26,6 +26,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.xml.bind.annotation.XmlElement;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 // TODO
-// arrays & collections (list, array[], set, collection, subclasses)
+// arrays & collections (set, collection, subclasses)
 // map (from jsonObject keySet)
 // required
 // generics
@@ -179,6 +180,11 @@ public class JsonProcessor extends BaseProcessor {
 
         if (ProcessingUtils.isAssignableFrom(typeUtils, fieldType, List.class)) {
             return mGenerator.optListValue(this, mBlock, json, fieldType, key);
+        }
+
+        if (fieldType instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) fieldType;
+            return mGenerator.optArrayValue(this, mBlock, json, arrayType, key);
         }
 
         if (ProcessingUtils.haveAnnotation(fieldTypeElement, XmlRootElement.class)) {
