@@ -1,6 +1,8 @@
 package blak.annotations.json;
 
-class Json {
+interface Json {
+    static final String JSON_OBJECT = "org.json.JSONObject";
+    static final String JSON_ARRAY = "org.json.JSONArray";
     static final String BOOLEAN = "Boolean";
     static final String INT = "Int";
     static final String LONG = "Long";

@@ -17,7 +17,6 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.androidannotations.ErrorHelper;
 import org.androidannotations.ProcessingException;
-import org.json.JSONObject;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
@@ -54,7 +53,6 @@ public class JsonProcessor extends BaseProcessor {
     public static final String JSON_SUFFIX = "Json";
 
     private JCodeModel mCodeModel;
-    private JClass mJsonClass;
     private JsonParseGenerator mGenerator;
     private JBlock mBlock;
 
@@ -78,7 +76,6 @@ public class JsonProcessor extends BaseProcessor {
 
     private void initCodeModel() {
         mCodeModel = new JCodeModel();
-        mJsonClass = mCodeModel.ref(JSONObject.class);
     }
 
     public JBlock getBlock() {
@@ -101,7 +98,7 @@ public class JsonProcessor extends BaseProcessor {
 
     private void createParseJson(JDefinedClass clazz, JType rootElementType, TypeElement rootElement) {
         JMethod parse = clazz.method(JMod.PUBLIC | JMod.STATIC, rootElementType, PARSE);
-        JClass jsonObjectType = mJsonClass;
+        JClass jsonObjectType = mCodeModel.ref(Json.JSON_OBJECT);
         JVar json = parse.param(jsonObjectType, JSON);
         mBlock = parse.body();
 

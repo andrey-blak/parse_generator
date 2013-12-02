@@ -16,8 +16,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -36,26 +34,23 @@ class JsonParseGenerator {
     private static final String JSON_STRING = "jsonString";
 
     private final JCodeModel mCodeModel;
-    private final JClass mStringClass;
-    private final JClass mJsonClass;
     private int mAutoincrement;
 
     public JsonParseGenerator(JCodeModel codeModel) {
         mCodeModel = codeModel;
-        mStringClass = mCodeModel.ref(String.class);
-        mJsonClass = mCodeModel.ref(JSONObject.class);
     }
 
     public void createParseString(JDefinedClass clazz, JType rootElementType) {
         JMethod parse = clazz.method(JMod.PUBLIC | JMod.STATIC, rootElementType, JsonProcessor.PARSE);
-        JVar jsonString = parse.param(mStringClass, JSON_STRING);
+        JType stringType = mCodeModel.ref(String.class);
+        JVar jsonString = parse.param(stringType, JSON_STRING);
         JBlock body = parse.body();
 
         CodeModelUtils.ifNullReturnNull(body, jsonString);
         body._if(jsonString.invoke(Java.IS_EMPTY))._then()._return(JExpr._null());
 
-        JClass jsonObjectType = mJsonClass;
-        JVar json = body.decl(jsonObjectType, JsonProcessor.JSON, JExpr._new(jsonObjectType).arg(jsonString));
+        JType jsonClass = mCodeModel.ref(Json.JSON_OBJECT);
+        JVar json = body.decl(jsonClass, JsonProcessor.JSON, JExpr._new(jsonClass).arg(jsonString));
 
         body._return(JExpr.invoke(JsonProcessor.PARSE).arg(json));
     }
@@ -120,8 +115,8 @@ class JsonParseGenerator {
         String tempName = getTempName();
 
         JExpressionImpl optJsonObject = json.invoke(Json.OPT_JSON_OBJECT).arg(key);
-        JClass jsonObjectType = mCodeModel.ref(JSONObject.class);
-        JExpression fieldJson = block.decl(jsonObjectType, tempName + JsonProcessor.JSON_SUFFIX, optJsonObject);
+        JType jsonClass = mCodeModel.ref(Json.JSON_OBJECT);
+        JExpression fieldJson = block.decl(jsonClass, tempName + JsonProcessor.JSON_SUFFIX, optJsonObject);
 
         JBlock ifNotNull = CodeModelUtils.ifNotNull(block, fieldJson);
         processor.setBlock(ifNotNull);
@@ -144,7 +139,7 @@ class JsonParseGenerator {
     }
 
     public JExpression optListValue(JsonProcessor processor, JBlock block, JExpression json, TypeMirror typeMirror, JExpression key) {
-        JVar jsonArray = block.decl(mCodeModel._ref(JSONArray.class), getTempName(), json.invoke(Json.OPT_JSON_ARRAY).arg(key));
+        JVar jsonArray = block.decl(mCodeModel.ref(Json.JSON_ARRAY), getTempName(), json.invoke(Json.OPT_JSON_ARRAY).arg(key));
         JBlock ifNotNull = CodeModelUtils.ifNotNull(block, jsonArray);
 
         String typeString = typeMirror.toString();
@@ -169,7 +164,7 @@ class JsonParseGenerator {
     }
 
     public JExpression optArrayValue(JsonProcessor processor, JBlock block, JExpression json, ArrayType arrayType, JExpression key) {
-        JVar jsonArray = block.decl(mCodeModel._ref(JSONArray.class), getTempName(), json.invoke(Json.OPT_JSON_ARRAY).arg(key));
+        JVar jsonArray = block.decl(mCodeModel.ref(Json.JSON_ARRAY), getTempName(), json.invoke(Json.OPT_JSON_ARRAY).arg(key));
         JBlock ifNotNull = CodeModelUtils.ifNotNull(block, jsonArray);
 
         String typeString = arrayType.toString();
@@ -193,7 +188,8 @@ class JsonParseGenerator {
 
     private JVar optTempString(JBlock block, JExpression json, JExpression key) {
         JExpression optString = json.invoke(Json.OPT_STRING).arg(key);
-        JVar tempString = block.decl(mStringClass, getTempName(), optString);
+        JType stringType = mCodeModel.ref(String.class);
+        JVar tempString = block.decl(stringType, getTempName(), optString);
         return tempString;
     }
 
