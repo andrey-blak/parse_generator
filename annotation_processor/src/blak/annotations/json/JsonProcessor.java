@@ -33,13 +33,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 import java.util.Set;
 
-// TODO
-// collections
-// map (from jsonObject keySet)
-// generics
-// check boxify/unboxify (from JType)
-// validation
-
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JsonProcessor extends BaseProcessor {
     private static final String JSON_PARSER = "JsonParser";
@@ -58,7 +51,7 @@ public class JsonProcessor extends BaseProcessor {
 
     @Override
     public boolean processAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        initCodeModel();
+        mCodeModel = new JCodeModel();
         try {
             Set<? extends Element> rootElements = roundEnv.getElementsAnnotatedWith(XmlRootElement.class);
             for (Element rootElement : rootElements) {
@@ -72,10 +65,6 @@ public class JsonProcessor extends BaseProcessor {
         }
 
         return false;
-    }
-
-    private void initCodeModel() {
-        mCodeModel = new JCodeModel();
     }
 
     public JBlock getBlock() {
